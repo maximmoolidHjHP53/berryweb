@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram - Secure Gateway</title>
+    <style>
+    body { opacity: 0; animation: fadeIn 0.4s ease-out forwards; }
+    @keyframes fadeIn { to { opacity: 1; } }
+
+
+
+      
+        * { box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: #0f172a; 
+            color: #f8fafc; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            min-height: 100vh; 
+        }
+
+        /* Top Navigation Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #334155;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #38bdf8;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #f8fafc;
+            border: 1px solid #334155;
+        }
+        .btn-outline:hover {
+            background: #334155;
+            border-color: #475569;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: #fff;
+            border: none;
+        }
+        .btn-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+        }
+
+        /* Hero Content Section */
+        .hero {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 60px 20px 40px 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            animation: fadeInSlide 0.6s ease-out forwards;
+        }
+
+        @keyframes fadeInSlide {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .badge {
+            background: rgba(56, 189, 248, 0.1);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin: 0 0 20px 0;
+            line-height: 1.1;
+            background: linear-gradient(to right, #f8fafc, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.description {
+            font-size: 1.1rem;
+            color: #94a3b8;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .cta-group {
+            display: flex;
+            gap: 15px;
+        }
+
+        .cta-group .btn {
+            padding: 14px 30px;
+            font-size: 1rem;
+        }
+
+        /* Features Section */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 900px;
+            margin: 20px auto 60px auto;
+            padding: 0 20px;
+        }
+
+        .feature-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 24px;
+            border-radius: 16px;
+            text-align: left;
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: #38bdf8;
+            box-shadow: 0 10px 25px -5px rgba(56, 189, 248, 0.1);
+        }
+
+        .feature-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.1rem;
+            color: #f8fafc;
+        }
+
+        .feature-card p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.8rem;
+            color: #64748b;
+            border-top: 1px solid #1e293b;
+            margin-top: auto;
+        }
+
+        @media (max-width: 600px) {
+            header { padding: 15px 20px; }
+            h1 { font-size: 2.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">⚡ Telegram Web</div>
+        <div class="nav-actions">
+            <a href="/login" class="btn btn-outline">Log In</a>
+            <a href="/register" class="btn btn-primary">Register</a>
+        </div>
+    </header>
+
+    <main class="hero">
+        <div class="badge">Secure Communication Matrix</div>
+        <h1>Instant Messaging, Redefined for Privacy.</h1>
+        <p class="description">
+            Our platform provides a high-integrity, lightning-fast decentralized connection environment. Designed with strict cryptographic safety filters and zero-friction peer mapping, enabling seamless real-time communication with absolute data security.
+        </p>
+        <div class="cta-group">
+            <a href="/register" class="btn btn-primary">Get Started</a>
+            <a href="/login" class="btn btn-outline">Sign In</a>
+        </div>
+    </main>
+
+    <section class="features">
+        <div class="feature-card">
+            <h3>🔒 Ultra-Secure Guard</h3>
+            <p>Rigorous input validation filters reject invalid patterns, symbols, and vulnerable spaces automatically.</p>
+        </div>
+        <div class="feature-card">
+            <h3>⚡ Instant Sockets</h3>
+            <p>Powered by low-latency Socket.io infrastructure ensuring your messages transmit and render instantly.</p>
+        </div>
+        <div class="feature-card">
+            <h3>🌐 Clean Architecture</h3>
+            <p>Modular structure separating authentication layers, friend contact routing, and live chat rooms seamlessly.</p>
+        </div>
+    </section>
+
+    <footer>
+        &copy; 2026 Telegram Clone System. All rights reserved.
+    </footer>
+
+</body>
+</html>

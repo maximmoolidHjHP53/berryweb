@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; background: #0f172a; color: #fff; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        header { background: #1e293b; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+        #chat-box { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .message { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 0.95rem; word-break: break-word; }
+        .incoming { background: #1e293b; align-self: flex-start; }
+        .outgoing { background: #2563eb; align-self: flex-end; }
+        .input-area { display: flex; padding: 10px; background: #1e293b; border-top: 1px solid #334155; }
+        input { flex: 1; background: #0f172a; border: 1px solid #334155; padding: 12px; border-radius: 8px; color: #fff; outline: none; }
+        button { background: #2563eb; color: #fff; border: none; padding: 0 20px; margin-left: 8px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <header>
+        <button onclick="window.location.href='/dashboard'" style="background:transparent; border:1px solid #334155; color:#fff; padding:5px 10px;">⬅ Back</button>
+        <span id="chat-title">Chat</span>
+        <span></span>
+    </header>
+
+    <div id="chat-box"></div>
+
+    <div class="input-area">
+        <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+        const currentUser = localStorage.getItem('chat_user');
+        const chatFriend = localStorage.getItem('active_chat');
+        if (!currentUser || !chatFriend) window.location.href = '/dashboard';
+
+        document.getElementById('chat-title').textContent = `Chat with ${chatFriend}`;
+
+        const socket = io();
+        const chatBox = document.getElementById('chat-box');
+        const messageInput = document.getElementById('message-input');
+
+        function sendMessage() {
+            const text = messageInput.value.trim();
+            if (text) {
+                socket.emit('send_message', { sender: currentUser, recipient: chatFriend, text });
+                appendMessage(currentUser, text, 'outgoing');
+                messageInput.value = '';
+            }
+        }
+
+        socket.on('receive_message', (data) => {
+            // Show message if it belongs to this current chat session
+            if ((data.sender === chatFriend && data.recipient === currentUser) || 
+                (data.sender === currentUser && data.recipient === chatFriend)) {
+                if (data.sender !== currentUser) {
+                    appendMessage(data.sender, data.text, 'incoming');
+                }
+            }
+        });
+
+        function appendMessage(sender, text, type) {
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            div.innerHTML = `<span style="font-size:0.75rem; color:#94a3b8; display:block; margin-bottom:3px;">${sender}</span>${text}`;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>

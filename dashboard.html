@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Friends</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; background: #0f172a; color: #fff; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        header { background: #1e293b; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+        .content { padding: 20px; flex: 1; overflow-y: auto; }
+        .add-box { display: flex; gap: 10px; margin-bottom: 20px; }
+        input { flex: 1; background: #1e293b; border: 1px solid #334155; padding: 10px; border-radius: 8px; color: #fff; outline: none; }
+        button { background: #2563eb; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .friend-item { background: #1e293b; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155; cursor: pointer; }
+        .friend-item:hover { background: #334155; }
+    </style>
+</head>
+<body>
+    <header>
+        <span id="welcome-user">Dashboard</span>
+        <button onclick="localStorage.clear(); window.location.href='/'" style="background:#ef4444; padding:5px 10px; font-size:0.8rem;">Logout</button>
+    </header>
+
+    <div class="content">
+        <h3>Add Friend</h3>
+        <div class="add-box">
+            <input type="text" id="friend-input" placeholder="Enter friend's username..." autocomplete="off">
+            <button onclick="addFriend()">Add</button>
+        </div>
+
+        <h3>Your Friends List</h3>
+        <div id="friends-list"></div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+        const currentUser = localStorage.getItem('chat_user');
+        if (!currentUser) window.location.href = '/';
+        document.getElementById('welcome-user').textContent = `Welcome, ${currentUser}`;
+
+        const socket = io();
+
+        function addFriend() {
+            const friendName = document.getElementById('friend-input').value.trim();
+            if (friendName) {
+                socket.emit('add_friend', { user: currentUser, friend: friendName });
+                document.getElementById('friend-input').value = '';
+            }
+        }
+
+        socket.on('friend_added_success', (data) => {
+            renderFriends(data.list);
+        });
+
+        socket.on('error_msg', (msg) => {
+            alert(msg);
+        });
+
+        function renderFriends(list) {
+            const container = document.getElementById('friends-list');
+            container.innerHTML = '';
+            list.forEach(friend => {
+                const div = document.createElement('div');
+                div.className = 'friend-item';
+                div.innerHTML = `<span>💬 ${friend}</span> <button onclick="startChat('${friend}')">Chat</button>`;
+                container.appendChild(div);
+            });
+        }
+
+        function startChat(friendName) {
+            localStorage.setItem('active_chat', friendName);
+            window.location.href = '/chat';
+        }
+    </script>
+</body>
+</html>
