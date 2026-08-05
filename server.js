@@ -101,51 +101,131 @@ app.post('/api/accept-policy', async (req, res) => {
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } });
 
-io.on('connection', (socket) => {
-    socket.on('add_friend', async (data) => {
-        const { user, friend } = data;
+    // Global user search
+    socket.on('get_all_users', async () => {
         try {
             const usersCollection = db.collection('users');
-            const targetUser = await usersCollection.findOne({ username: friend });
-
-            if (targetUser && user !== friend) {
-                const currentUser = await usersCollection.findOne({ username: user });
-                let friends = currentUser.friends || [];
-
-                if (!friends.includes(friend)) {
-                    friends.push(friend);
-                    await usersCollection.updateOne({ username: user }, { $set: { friends } });
-                    socket.emit('friend_added_success', { friend, list: friends });
-                } else {
-                    socket.emit('error_msg', "Already friends!");
-                }
-            } else {
-                socket.emit('error_msg', "User does not exist!");
-            }
-        } catch (e) {
-            socket.emit('error_msg', "Database error adding friend.");
-        }
-    });
-
-            socket.on('get_all_users', async () => {
-        try {
-            const usersCollection = db.collection('users');
-            const usersCursor = usersCollection.find({});
-            const usersList = await usersCursor.toArray();
-            
-            // Extract usernames robustly checking different property names
-            const usernames = usersList.map(u => u.username || u.user || u.name).filter(Boolean);
+            const usersList = await usersCollection.find({}).toArray();
+            const usernames = usersList.map(u => u.username || u.user).filter(Boolean);
             socket.emit('all_users_list', usernames);
         } catch (e) {
             socket.emit('all_users_list', []);
         }
     });
 
-
-  
-    socket.on('send_message', (data) => {
-        io.emit('receive_message', data);
+    // Fetch user profile data including friends and pending requests
+    socket.on('get_user_data', async (username) => {
+        try {
+            const usersCollection = db.collection('users');
+            const user = await usersCollection.findOne({ username });
+            if (user) {
+                socket.emit('user_data_response', {
+                    friends: user.friends || [],
+                    friendRequests: user.friendRequests || []
+                });
+            }
+        } catch (e) {
+            socket.emit('user_data_response', { friends: [], friendRequests: [] });
+        }
     });
+
+    // Send Friend Request
+    socket.on('send_friend_request', async ({ sender, receiver }) => {
+        try {
+            const usersCollection = db.collection('users');
+            const targetUser = await usersCollection.findOne({ username: receiver });
+            if (!targetUser) {
+                socket.emit('friend_action_response', { success: false, message: 'User does not exist!' });
+                return;
+            }
+
+            let requests = targetUser.friendRequests || [];
+            let friends = targetUser.friends || [];
+
+            if (friends.includes(sender)) {
+                socket.emit('friend_action_response', { success: false, message: 'You are already friends!' });
+                return;
+            }
+
+            if (requests.includes(sender)) {
+                socket.emit('friend_action_response', { success: false, message: 'Friend request already sent!' });
+                return;
+            }
+
+            requests.push(sender);
+            await usersCollection.updateOne({ username: receiver }, { $set: { friendRequests: requests } });
+            
+            socket.emit('friend_action_response', { success: true, message: 'Friend request sent successfully!' });
+            
+            // Notify receiver live if connected
+            io.emit('refresh_requests_' + receiver);
+        } catch (e) {
+            socket.emit('friend_action_response', { success: false, message: 'Server error sending request.' });
+        }
+    });
+
+    // Accept or Reject Friend Request
+    socket.on('respond_friend_request', async ({ username, requester, action }) => {
+        try {
+            const usersCollection = db.collection('users');
+            const userDoc = await usersCollection.findOne({ username });
+            const requesterDoc = await usersCollection.findOne({ username: requester });
+
+            let requests = userDoc.friendRequests || [];
+            requests = requests.filter(r => r !== requester);
+
+            let userFriends = userDoc.friends || [];
+            let requesterFriends = requesterDoc.friends || [];
+
+            if (action === 'accept') {
+                if (!userFriends.includes(requester)) userFriends.push(requester);
+                if (!requesterFriends.includes(username)) requesterFriends.push(username);
+
+                await usersCollection.updateOne({ username: requester }, { $set: { friends: requesterFriends } });
+            }
+
+            await usersCollection.updateOne({ username }, { $set: { friendRequests: requests, friends: userFriends } });
+
+            socket.emit('friend_action_response', { success: true, list: userFriends, requests: requests });
+            io.emit('refresh_friends_' + username);
+            io.emit('refresh_friends_' + requester);
+            io.emit('refresh_requests_' + username);
+        } catch (e) {
+            console.error(e);
+        }
+    });
+
+    // Real-time typing indicators & Messaging
+    socket.on('typing', (data) => {
+        io.emit('display_typing', data);
+    });
+
+    socket.on('send_message', async (data) => {
+        // data: { sender, receiver, message, timestamp }
+        try {
+            const messagesCollection = db.collection('messages');
+            await messagesCollection.insertOne(data);
+            io.emit('receive_message', data);
+        } catch (e) {
+            console.error(e);
+        }
+    });
+
+    socket.on('get_messages', async ({ user1, user2 }) => {
+        try {
+            const messagesCollection = db.collection('messages');
+            const msgs = await messagesCollection.find({
+                $or: [
+                    { sender: user1, receiver: user2 },
+                    { sender: user2, receiver: user1 }
+                ]
+            }).sort({ timestamp: 1 }).toArray();
+            socket.emit('loaded_messages', msgs);
+        } catch (e) {
+            socket.emit('loaded_messages', []);
+        }
+    });
+
 });
 
 const PORT = process.env.PORT || 3000;
