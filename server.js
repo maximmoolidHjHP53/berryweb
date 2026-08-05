@@ -18,19 +18,26 @@ mongoose.connect(MONGO_URI)
     .then(() => console.log("Connected to MongoDB Atlas successfully!"))
     .catch(err => console.error("MongoDB Connection Error:", err.message));
 
+// 1. Update User Schema to include pending requests and inbox state flags
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    friends: { type: [String], default: [] } // Added friend list tracking
+    friends: { type: [String], default: [] },
+    friendRequests: { type: [String], default: [] }, // Incoming requests
+    sentRequests: { type: [String], default: [] },   // Outgoing pending requests
+    unreadInbox: { type: Boolean, default: false }   // Red badge tracker
 });
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 
 
+
 // Routes
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
 app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
+app.get('/inbox', (req, res) => res.sendFile(path.join(__dirname, 'inbox.html')));
 app.get('/policy', (req, res) => res.sendFile(path.join(__dirname, 'policy.html')));
 
 app.post('/register', async (req, res) => {
@@ -69,45 +76,123 @@ app.post('/login', async (req, res) => {
     }
 });
 
-// Live Search Endpoint
+// Enhanced Search Endpoint with request status flags
 app.get('/api/search', async (req, res) => {
     const { q, user } = req.query;
     try {
-        const users = await User.find({
+        const currentUser = await User.findOne({ username: user });
+        const allUsers = await User.find({
             username: { $regex: q, $options: 'i', $ne: user }
         }).limit(5);
-        res.json(users);
+
+        const formattedUsers = allUsers.map(u => {
+            let status = 'none';
+            if (currentUser.friends.includes(u.username)) status = 'friends';
+            else if (currentUser.sentRequests.includes(u.username)) status = 'pending_sent';
+            else if (currentUser.friendRequests.includes(u.username)) status = 'pending_received';
+            return { username: u.username, status };
+        });
+
+        res.json({ users: formattedUsers });
     } catch (err) {
-        res.status(500).json([]);
+        res.status(500).json({ users: [] });
     }
 });
 
-// Add Friend Endpoint
-app.post('/api/add-friend', async (req, res) => {
+// Send Friend Request Endpoint
+app.post('/api/send-request', async (req, res) => {
     const { username, friendUsername } = req.body;
     try {
-        const user = await User.findOne({ username });
-        if (user && !user.friends.includes(friendUsername)) {
-            user.friends.push(friendUsername);
-            await user.save();
+        const sender = await User.findOne({ username });
+        const receiver = await User.findOne({ username: friendUsername });
+
+        if (!receiver || sender.friends.includes(friendUsername) || sender.sentRequests.includes(friendUsername)) {
+            return res.status(400).json({ success: false, message: "Request cannot be sent." });
         }
+
+        sender.sentRequests.push(friendUsername);
+        receiver.friendRequests.push(username);
+        receiver.unreadInbox = true; // Trigger red notification badge
+
+        await sender.save();
+        await receiver.save();
+
         res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ success: false, message: "Could not add friend." });
+        res.status(500).json({ success: false, message: "Server error." });
     }
 });
 
-// Get Friends Endpoint
+// Get Pending Requests
+app.get('/api/friend-requests', async (req, res) => {
+    const { user } = req.query;
+    try {
+        const dbUser = await User.findOne({ username: user });
+        if (dbUser) {
+            dbUser.unreadInbox = false; // Clear unread badge when user opens inbox
+            await dbUser.save();
+        }
+        res.json({ requests: dbUser ? dbUser.friendRequests : [] });
+    } catch (err) {
+        res.status(500).json({ requests: [] });
+    }
+});
+
+// Respond to Request (Accept or Decline)
+app.post('/api/respond-request', async (req, res) => {
+    const { username, senderUsername, action } = req.body;
+    try {
+        const recipient = await User.findOne({ username });
+        const sender = await User.findOne({ username: senderUsername });
+
+        recipient.friendRequests = recipient.friendRequests.filter(u => u !== senderUsername);
+        if (sender) {
+            sender.sentRequests = sender.sentRequests.filter(u => u !== username);
+        }
+
+        if (action === 'accept') {
+            if (!recipient.friends.includes(senderUsername)) recipient.friends.push(senderUsername);
+            if (sender && !sender.friends.includes(username)) sender.friends.push(username);
+        }
+
+        await recipient.save();
+        if (sender) await sender.save();
+
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Error processing request." });
+    }
+});
+
+// Check Inbox Badge Count
+app.get('/api/inbox-count', async (req, res) => {
+    const { user } = req.query;
+    try {
+        const dbUser = await User.findOne({ username: user });
+        const count = (dbUser && dbUser.unreadInbox) ? dbUser.friendRequests.length : 0;
+        res.json({ count });
+    } catch (err) {
+        res.json({ count: 0 });
+    }
+});
+
+// Get Only True Friends List
 app.get('/api/friends', async (req, res) => {
     const { user } = req.query;
     try {
         const dbUser = await User.findOne({ username: user });
-        res.json({ friends: dbUser ? dbUser.friends : [] });
+        if (!dbUser) return res.json({ friends: [] });
+
+        const friendsData = dbUser.friends.map(friendName => ({
+            username: friendName,
+            unreadCount: 0 // Will connect to live chat counter next
+        }));
+
+        res.json({ friends: friendsData });
     } catch (err) {
         res.status(500).json({ friends: [] });
     }
 });
-
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

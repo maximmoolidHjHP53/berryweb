@@ -29,7 +29,6 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        /* Profile Header Section */
         .profile-header {
             display: flex;
             align-items: center;
@@ -82,9 +81,27 @@
             transition: opacity 0.2s;
         }
 
+        .btn-inbox-wrapper {
+            position: relative;
+        }
+
         .btn-inbox {
             background-color: #2b3b4c;
             color: #f5f5f5;
+        }
+
+        /* Red Unread Counter Badge for Inbox */
+        .badge-counter {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background-color: #eb5757;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 50%;
+            display: none;
         }
 
         .btn-logout {
@@ -96,7 +113,6 @@
             opacity: 0.85;
         }
 
-        /* Search Section */
         h4 {
             margin: 0 0 12px 0;
             font-size: 14px;
@@ -124,13 +140,12 @@
             outline: none;
         }
 
-        /* Live Search Results Dropdown */
         .search-results {
             background: #0e1621;
             border: 1px solid #374151;
             border-radius: 8px;
             margin-top: 5px;
-            max-height: 150px;
+            max-height: 160px;
             overflow-y: auto;
             display: none;
         }
@@ -148,13 +163,19 @@
             background: #2fa572;
             color: #0e1621;
             border: none;
-            padding: 4px 10px;
-            border-radius: 4px;
+            padding: 5px 12px;
+            border-radius: 6px;
             font-weight: 600;
             cursor: pointer;
         }
 
-        /* Friend List */
+        .search-result-item button.pending {
+            background: #4b5563;
+            color: #d1d5db;
+            cursor: default;
+        }
+
+        /* Friend List Section */
         .friend-list {
             list-style: none;
             padding: 0;
@@ -165,15 +186,73 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 0;
+            padding: 10px 0;
             border-bottom: 1px solid rgba(255,255,255,0.05);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .friend-item:hover {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .friend-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .friend-avatar {
+            width: 36px;
+            height: 36px;
+            background-color: #374151;
+            color: #2fa572;
+            font-size: 15px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            text-transform: uppercase;
+        }
+
+        .friend-meta span {
+            display: block;
+        }
+
+        .friend-name {
             font-size: 14px;
+            font-weight: 600;
+        }
+
+        .friend-action {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .msg-badge {
+            background-color: #eb5757;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 50%;
+            display: none;
+        }
+
+        .msg-icon-text {
+            font-size: 12px;
+            color: #2fa572;
+            font-weight: 600;
         }
 
         .no-friends {
             color: #8a96a3;
             font-size: 13px;
             margin: 0;
+            text-align: center;
+            padding: 10px 0;
         }
     </style>
 </head>
@@ -189,7 +268,10 @@
                 </div>
             </div>
             <div class="action-buttons">
-                <button class="btn btn-inbox" onclick="window.location.href='/inbox'">Inbox</button>
+                <div class="btn-inbox-wrapper">
+                    <button class="btn btn-inbox" onclick="openInbox()">Inbox</button>
+                    <span id="inboxBadge" class="badge-counter">0</span>
+                </div>
                 <button class="btn btn-logout" onclick="logout()">Log Out</button>
             </div>
         </div>
@@ -211,7 +293,6 @@
     </div>
 
     <script>
-        // Check active login session
         const currentUsername = localStorage.getItem('username') || localStorage.getItem('berry_user');
         if (!currentUsername) {
             window.location.href = '/login';
@@ -220,68 +301,85 @@
             document.getElementById('userAvatar').textContent = currentUsername.charAt(0).toUpperCase();
         }
 
-        // Logout function
         function logout() {
             localStorage.clear();
             window.location.href = '/login';
         }
 
-        // Live User Search Functionality
+        function openInbox() {
+            window.location.href = '/inbox';
+        }
+
+        // Live Search Input Handler
         const searchInput = document.getElementById('searchInput');
         const searchResults = document.getElementById('searchResults');
 
         searchInput.addEventListener('input', async (e) => {
             const query = e.target.value.trim();
-            if (query.length < 1) {
+            
+            // If search bar is completely blank, hide results dropdown
+            if (query.length === 0) {
                 searchResults.style.display = 'none';
+                searchResults.innerHTML = '';
                 return;
             }
 
             try {
                 const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&user=${encodeURIComponent(currentUsername)}`);
-                const users = await res.json();
+                const data = await res.json();
 
                 searchResults.innerHTML = '';
-                if (users.length > 0) {
+                if (data.users && data.users.length > 0) {
                     searchResults.style.display = 'block';
-                    users.forEach(user => {
+                    data.users.forEach(user => {
                         const div = document.createElement('div');
                         div.className = 'search-result-item';
-                        div.innerHTML = `<span>@${user.username}</span> <button onclick="addFriend('${user.username}')">Add</button>`;
+                        
+                        let btnHtml = '';
+                        if (user.status === 'friends') {
+                            btnHtml = `<button class="pending" disabled>Friends</button>`;
+                        } else if (user.status === 'pending_sent') {
+                            btnHtml = `<button class="pending" disabled>Pending</button>`;
+                        } else if (user.status === 'pending_received') {
+                            btnHtml = `<button class="pending" disabled>Request Sent You</button>`;
+                        } else {
+                            btnHtml = `<button onclick="sendFriendRequest('${user.username}', this)">Add Friend</button>`;
+                        }
+
+                        div.innerHTML = `<span>@${user.username}</span> ${btnHtml}`;
                         searchResults.appendChild(div);
                     });
                 } else {
                     searchResults.style.display = 'block';
-                    searchResults.innerHTML = `<div style="padding:10px; color:#8a96a3; font-size:13px;">No users found</div>`;
+                    searchResults.innerHTML = `<div style="padding:10px; color:#8a96a3; font-size:13px; text-align:center;">No users found</div>`;
                 }
             } catch (err) {
                 console.error("Search error", err);
             }
         });
 
-        // Add Friend Function
-        async function addFriend(friendUsername) {
+        // Send Friend Request / Turn to Pending
+        async function sendFriendRequest(friendUsername, btnElement) {
             try {
-                const res = await fetch('/api/add-friend', {
+                const res = await fetch('/api/send-request', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username: currentUsername, friendUsername })
                 });
                 const data = await res.json();
                 if (data.success) {
-                    alert(`Successfully added @${friendUsername}!`);
-                    searchInput.value = '';
-                    searchResults.style.display = 'none';
-                    loadFriends();
+                    btnElement.textContent = 'Pending';
+                    btnElement.className = 'pending';
+                    btnElement.disabled = true;
                 } else {
                     alert(data.message);
                 }
             } catch (err) {
-                alert("Error adding friend.");
+                alert("Error sending request.");
             }
         }
 
-        // Load Friendlist Function
+        // Load Confirmed Friendlist (Only True Friends)
         async function loadFriends() {
             const friendListEl = document.getElementById('friendList');
             try {
@@ -293,8 +391,25 @@
                     data.friends.forEach(friend => {
                         const li = document.createElement('li');
                         li.className = 'friend-item';
-                        li.innerHTML = `<span>@${friend}</span> <span style="color:#2fa572; font-size:12px;">Connected</span>`;
+                        li.onclick = () => window.location.href = `/chat?friend=${encodeURIComponent(friend.username)}`;
+                        
+                        li.innerHTML = `
+                            <div class="friend-info">
+                                <div class="friend-avatar">${friend.username.charAt(0)}</div>
+                                <div class="friend-meta">
+                                    <span class="friend-name">@${friend.username}</span>
+                                </div>
+                            </div>
+                            <div class="friend-action">
+                                <span class="msg-badge" id="badge-${friend.username}">${friend.unreadCount || 0}</span>
+                                <span class="msg-icon-text">Message</span>
+                            </div>
+                        `;
                         friendListEl.appendChild(li);
+
+                        if (friend.unreadCount > 0) {
+                            document.getElementById(`badge-${friend.username}`).style.display = 'inline-block';
+                        }
                     });
                 } else {
                     friendListEl.innerHTML = `<li class="no-friends">No friends added yet. Search above to connect!</li>`;
@@ -304,8 +419,24 @@
             }
         }
 
-        // Load friends on initial render
+        // Check Inbox Notification Badge Count
+        async function checkInboxBadge() {
+            try {
+                const res = await fetch(`/api/inbox-count?user=${encodeURIComponent(currentUsername)}`);
+                const data = await res.json();
+                const badge = document.getElementById('inboxBadge');
+                if (data.count > 0) {
+                    badge.textContent = data.count;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            } catch (err) {}
+        }
+
         loadFriends();
+        checkInboxBadge();
+        setInterval(checkInboxBadge, 5000); // Check notifications live every 5s
     </script>
 </body>
 </html>
