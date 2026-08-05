@@ -5,25 +5,23 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-// Replace your existing io initialization with this:
 const io = new Server(server, {
     cors: { origin: "*" },
     transports: ['websocket', 'polling'],
-    pingTimeout: 60000,
-    pingInterval: 25000
+    pingTimeout: 120000,
+    pingInterval: 25000,
+    upgradeTimeout: 30000,
+    maxHttpBufferSize: 1e8
 });
-
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname)));
 
-// Global in-memory application store
 let globalUsers = {};
 let onlineUsers = {};
 let messages = [];
 
-// Routes
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
 app.get('/home', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
