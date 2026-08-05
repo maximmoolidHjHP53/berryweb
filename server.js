@@ -86,4 +86,36 @@ io.on('connection', (socket) => {
 
     socket.on('respond_friend_request', (data) => {
         const { username, requester, action } = data;
-        if (users
+        if (users[username]) {
+            users[username].friendRequests = users[username].friendRequests.filter(u => u !== requester);
+            if (action === 'accept') {
+                if (!users[username].friends.includes(requester)) users[username].friends.push(requester);
+                if (users[requester] && !users[requester].friends.includes(username)) {
+                    users[requester].friends.push(username);
+                }
+                io.emit('refresh_friends_' + requester);
+            }
+            io.emit('refresh_friends_' + username);
+            io.emit('refresh_requests_' + username);
+        }
+    });
+
+    socket.on('get_messages', (data) => {
+        const { user1, user2 } = data;
+        const conversation = messages.filter(m => 
+            (m.sender === user1 && m.receiver === user2) || 
+            (m.sender === user2 && m.receiver === user1)
+        );
+        socket.emit('loaded_messages', conversation);
+    });
+
+    socket.on('send_message', (data) => {
+        messages.push(data);
+        io.emit('receive_message', data);
+    });
+});
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`Server running successfully on port ${PORT}`);
+});
