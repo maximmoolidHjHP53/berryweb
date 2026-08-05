@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -11,177 +11,209 @@
             --text-main: #e0e0e0;
             --text-muted: #888888;
             --accent-green: #00e676;
-            --sent-bubble: #004d26;
-            --recv-bubble: #1f1f1f;
+            --hover-overlay: rgba(255, 255, 255, 0.03);
             --border-color: rgba(255, 255, 255, 0.06);
+            --bubble-me: #00e676;
+            --bubble-me-text: #0a0a0a;
+            --bubble-other: #202020;
+            --bubble-other-text: #e0e0e0;
         }
 
-        * {
-            box-sizing: border-box;
+        [data-theme="light"] {
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-main: #111111;
+            --text-muted: #666666;
+            --accent-green: #00c853;
+            --hover-overlay: rgba(0, 0, 0, 0.04);
+            --border-color: rgba(0, 0, 0, 0.08);
+            --bubble-me: #00c853;
+            --bubble-me-text: #ffffff;
+            --bubble-other: #e9ecef;
+            --bubble-other-text: #111111;
         }
 
-        html, body {
-            height: 100%;
-            height: 100dvh;
-            margin: 0;
-            padding: 0;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            height: 100vh;
             overflow: hidden;
             -webkit-tap-highlight-color: transparent;
         }
 
         .chat-container {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            height: 100dvh;
             width: 100%;
             max-width: 600px;
-            margin: 0 auto;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
             background-color: var(--bg-color);
         }
 
         .chat-header {
-            background-color: var(--card-bg);
             padding: 12px 16px;
             display: flex;
             align-items: center;
-            gap: 14px;
+            justify-content: space-between;
+            background-color: var(--bg-color);
             border-bottom: 1px solid var(--border-color);
-            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .back-btn {
+            background: none;
+            border: none;
             color: var(--accent-green);
-            text-decoration: none;
-            font-size: 20px;
-            font-weight: bold;
+            font-size: 22px;
+            cursor: pointer;
+            padding: 0;
             display: flex;
             align-items: center;
-            justify-content: center;
         }
 
-        .chat-avatar {
+        .header-avatar {
             width: 38px;
             height: 38px;
-            background-color: #1e1e1e;
+            background-color: var(--hover-overlay);
             color: var(--accent-green);
+            font-size: 14px;
             font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
             text-transform: uppercase;
-            font-size: 14px;
             border: 1px solid var(--border-color);
         }
 
-        .chat-title-wrapper span {
-            display: block;
-        }
-
-        .chat-title {
+        .header-info h3 {
+            margin: 0;
             font-size: 15px;
             font-weight: 700;
-            color: var(--text-main);
         }
 
-        .chat-status {
+        .header-status {
             font-size: 11px;
             color: var(--accent-green);
+            margin-top: 2px;
         }
 
-        .chat-messages {
+        .messages-area {
             flex: 1;
             padding: 16px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 10px;
-            background-color: var(--bg-color);
-            min-height: 0;
-            scroll-behavior: smooth;
         }
 
-        .message {
+        .message-bubble {
             max-width: 75%;
             padding: 10px 14px;
             border-radius: 14px;
             font-size: 14px;
-            word-break: break-word;
             line-height: 1.4;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            word-break: break-word;
+            position: relative;
         }
 
-        .message.sent {
-            background-color: var(--sent-bubble);
-            color: #fff;
+        .message-bubble.me {
+            background-color: var(--bubble-me);
+            color: var(--bubble-me-text);
             align-self: flex-end;
             border-bottom-right-radius: 4px;
-            border: 1px solid rgba(0, 230, 118, 0.2);
         }
 
-        .message.received {
-            background-color: var(--recv-bubble);
-            color: var(--text-main);
+        .message-bubble.other {
+            background-color: var(--bubble-other);
+            color: var(--bubble-other-text);
             align-self: flex-start;
             border-bottom-left-radius: 4px;
-            border: 1px solid var(--border-color);
         }
 
-        .message img {
-            max-width: 100%;
-            border-radius: 8px;
-            display: block;
-            margin-top: 4px;
+        .message-image {
+            max-width: 220px;
+            border-radius: 10px;
             cursor: pointer;
+            display: block;
+            margin-bottom: 4px;
         }
 
-        /* Footer Input Bar */
+        .message-meta {
+            font-size: 10px;
+            margin-top: 4px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 4px;
+            opacity: 0.8;
+        }
+
+        /* Typing Indicator bar */
+        .typing-indicator-row {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 16px;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+        .typing-dots span {
+            height: 5px;
+            width: 5px;
+            background-color: var(--text-muted);
+            border-radius: 50%;
+            display: inline-block;
+            animation: bounce 1.3s infinite ease-in-out;
+        }
+        .typing-dots span:nth-child(2) { animation-delay: -1.1s; }
+        .typing-dots span:nth-child(3) { animation-delay: -0.9s; }
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-4px); }
+        }
+
         .chat-input-bar {
-            background-color: var(--card-bg);
-            padding: 10px 16px;
+            padding: 12px 16px;
+            background-color: var(--bg-color);
+            border-top: 1px solid var(--border-color);
             display: flex;
             align-items: center;
             gap: 10px;
-            border-top: 1px solid var(--border-color);
-            flex-shrink: 0;
-            width: 100%;
         }
 
-        .attach-btn {
+        .file-upload-btn {
             background: none;
             border: none;
-            font-size: 22px;
+            color: var(--text-muted);
+            font-size: 20px;
             cursor: pointer;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            transition: transform 0.1s;
-        }
-
-        .attach-btn:active {
-            transform: scale(0.9);
+            padding: 4px;
         }
 
         .chat-input {
             flex: 1;
             padding: 10px 14px;
-            background-color: #1e1e1e;
+            background-color: var(--hover-overlay);
             border: 1px solid var(--border-color);
             border-radius: 20px;
             color: var(--text-main);
-            outline: none;
             font-size: 14px;
-            transition: border-color 0.2s;
-        }
-
-        .chat-input:focus {
-            border-color: var(--accent-green);
+            outline: none;
         }
 
         .send-btn {
@@ -191,200 +223,273 @@
             width: 38px;
             height: 38px;
             border-radius: 50%;
-            font-weight: 700;
-            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
             flex-shrink: 0;
-            transition: opacity 0.2s;
         }
 
-        .send-btn:active {
-            opacity: 0.8;
-        }
-
-        #fileInput {
+        /* Fullscreen Image Preview & Download Modal */
+        .photo-modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0,0,0,0.9);
             display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .photo-modal.active {
+            display: flex;
+        }
+        .photo-modal img {
+            max-width: 100%;
+            max-height: 75vh;
+            border-radius: 12px;
+            object-fit: contain;
+        }
+        .photo-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+        }
+        .modal-action-btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-download {
+            background-color: var(--accent-green);
+            color: #0a0a0a;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-close-modal {
+            background-color: #333;
+            color: white;
         }
     </style>
 </head>
 <body>
 
     <div class="chat-container">
-        <div class="chat-header">
-            <a href="/dashboard" class="back-btn">&larr;</a>
-            <div class="chat-avatar" id="chatAvatar">?</div>
-            <div class="chat-title-wrapper">
-                <span class="chat-title" id="chatTitle">Chat</span>
-                <span class="chat-status">Online</span>
+        <header class="chat-header">
+            <div class="header-left">
+                <button class="back-btn" onclick="window.location.href='/dashboard'">←</button>
+                <div class="header-avatar" id="headerAvatar">?</div>
+                <div class="header-info">
+                    <h3 id="headerUsername">Chat</h3>
+                    <div class="header-status">Online</div>
+                </div>
             </div>
+        </header>
+
+        <div class="messages-area" id="messagesArea"></div>
+
+        <div class="typing-indicator-row" id="typingIndicator">
+            <span id="typingUser">Friend</span> is typing
+            <div class="typing-dots"><span></span><span></span><span></span></div>
         </div>
 
-        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-bar">
+            <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+            <button class="file-upload-btn" onclick="document.getElementById('imageInput').click()" title="Send Photo">📎</button>
+            <input type="text" id="messageInput" class="chat-input" placeholder="Type a message..." oninput="handleTypingInput()">
+            <button class="send-btn" onclick="sendMessage()">➤</button>
+        </div>
+    </div>
 
-        <form class="chat-input-bar" id="chatForm">
-            <input type="file" id="fileInput" accept="image/*">
-            <button type="button" class="attach-btn" id="attachBtn" title="Send Photo">🖇️</button>
-            <input type="text" id="messageInput" class="chat-input" placeholder="Type a message..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="random_chat_field_xyz" readonly onfocus="this.removeAttribute('readonly');">
-            <button type="submit" class="send-btn">&#10148;</button>
-        </form>
+    <div id="photoModal" class="photo-modal" onclick="closePhotoModal(event)">
+        <img id="modalImage" src="" alt="Enlarged Photo">
+        <div class="photo-actions">
+            <a id="downloadLink" class="modal-action-btn btn-download" download="berryweb_photo.jpg">Download to Phone</a>
+            <button class="modal-action-btn btn-close-modal" onclick="document.getElementById('photoModal').classList.remove('active')">Close</button>
+        </div>
     </div>
 
     <script>
-        const currentUsername = localStorage.getItem('username') || localStorage.getItem('berry_user');
         const urlParams = new URLSearchParams(window.location.search);
         const friendUsername = urlParams.get('friend');
+        const currentUsername = localStorage.getItem('berry_session_user') || localStorage.getItem('username');
 
         if (!currentUsername || !friendUsername) {
-            window.location.href = '/dashboard';
+            window.location.replace('/dashboard');
         }
 
-        document.getElementById('chatTitle').textContent = `@${friendUsername}`;
-        document.getElementById('chatAvatar').textContent = friendUsername.charAt(0).toUpperCase();
+        document.getElementById('headerUsername').textContent = `@${friendUsername}`;
+        document.getElementById('headerAvatar').textContent = friendUsername.charAt(0).toUpperCase();
 
-        if ("Notification" in window && Notification.permission !== "granted") {
-            Notification.requestPermission();
-        }
+        let lastMessageCount = 0;
+        let typingTimeout = null;
 
-        const chatMessages = document.getElementById('chatMessages');
-        const fileInput = document.getElementById('fileInput');
-        const attachBtn = document.getElementById('attachBtn');
+        // --- Fetch & Render Messages ---
+        async function loadMessages() {
+            try {
+                const res = await fetch(`/api/messages?user=${encodeURIComponent(currentUsername)}&friend=${encodeURIComponent(friendUsername)}`);
+                const data = await res.json();
+                const area = document.getElementById('messagesArea');
 
-        attachBtn.addEventListener('click', () => {
-            fileInput.click();
-        });
+                if (data.messages) {
+                    // Only redraw if message count changed to prevent jitter
+                    if (data.messages.length !== lastMessageCount) {
+                        lastMessageCount = data.messages.length;
+                        area.innerHTML = '';
 
-        // Instant Photo Compression & Upload Handler (Fixes multi-try failure lag)
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+                        data.messages.forEach(msg => {
+                            const isMe = msg.sender === currentUsername;
+                            const bubble = document.createElement('div');
+                            bubble.className = `message-bubble ${isMe ? 'me' : 'other'}`;
 
-            const reader = new FileReader();
-            reader.onload = function (uploadEvent) {
-                const img = new Image();
-                img.onload = async function () {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-                    const MAX_WIDTH = 800; // Optimal max width for fast transmission
+                            let contentHtml = '';
+                            if (msg.image) {
+                                contentHtml += `<img src="${msg.image}" class="message-image" onclick="openPhotoModal('${msg.image}')">`;
+                            }
+                            if (msg.text) {
+                                contentHtml += `<div>${escapeHtml(msg.text)}</div>`;
+                            }
 
-                    if (width > MAX_WIDTH) {
-                        height = Math.round((height * MAX_WIDTH) / width);
-                        width = MAX_WIDTH;
+                            // Sent vs Seen indicators
+                            let statusIndicator = '';
+                            if (isMe) {
+                                statusIndicator = msg.read ? '<span>✓✓ Seen</span>' : '<span>✓ Sent</span>';
+                            }
+
+                            bubble.innerHTML = `
+                                ${contentHtml}
+                                <div class="message-meta">
+                                    <span>${msg.time || ''}</span>
+                                    ${statusIndicator}
+                                </div>
+                            `;
+                            area.appendChild(bubble);
+                        });
+                        area.scrollTop = area.scrollHeight;
                     }
+                }
+            } catch (err) {}
+        }
 
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
+        // --- Typing Status Handling ---
+        function handleTypingInput() {
+            clearTimeout(typingTimeout);
+            fetch('/api/typing', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user: currentUsername, friend: friendUsername, typing: true })
+            });
 
-                    // Convert compressed image to lightweight JPEG Base64 string
-                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
+            typingTimeout = setTimeout(() => {
+                fetch('/api/typing', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user: currentUsername, friend: friendUsername, typing: false })
+                });
+            }, 1500);
+        }
 
-                    await sendDataToServer({
-                        sender: currentUsername,
-                        receiver: friendUsername,
-                        text: '',
-                        image: compressedBase64
-                    });
-                };
-                img.src = uploadEvent.target.result;
-            };
-            reader.readAsDataURL(file);
-            fileInput.value = '';
-        });
+        async function checkTypingStatus() {
+            try {
+                const res = await fetch(`/api/get-typing?user=${encodeURIComponent(friendUsername)}&friend=${encodeURIComponent(currentUsername)}`);
+                const data = await res.json();
+                const indicator = document.getElementById('typingIndicator');
+                const userSpan = document.getElementById('typingUser');
 
-        document.getElementById('chatForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+                if (data.isTyping) {
+                    userSpan.textContent = `@${friendUsername}`;
+                    indicator.style.display = 'flex';
+                } else {
+                    indicator.style.display = 'none';
+                }
+            } catch (err) {}
+        }
+
+        // --- Send Text Message ---
+        async function sendMessage() {
             const input = document.getElementById('messageInput');
             const text = input.value.trim();
             if (!text) return;
 
             input.value = '';
-            await sendDataToServer({
-                sender: currentUsername,
-                receiver: friendUsername,
-                text: text,
-                image: ''
+            // Stop typing status immediately
+            fetch('/api/typing', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user: currentUsername, friend: friendUsername, typing: false })
             });
-        });
 
-        async function sendDataToServer(payload) {
             try {
-                const res = await fetch('/api/send-message', {
+                await fetch('/api/send-message', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ sender: currentUsername, receiver: friendUsername, text })
                 });
-                const data = await res.json();
-                if (data.success) {
-                    await loadMessages();
-                    scrollToBottom(); // Instant scroll down like Facebook
-                }
+                loadMessages();
             } catch (err) {}
         }
 
-        function scrollToBottom() {
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
+        // --- Send Image Message ---
+        async function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
 
-        let lastMessageCount = 0;
-        let isInitialLoad = true;
-
-        async function loadMessages() {
-            try {
-                const res = await fetch(`/api/messages?user=${encodeURIComponent(currentUsername)}&friend=${encodeURIComponent(friendUsername)}`);
-                const data = await res.json();
-                
-                if (data.messages) {
-                    if (data.messages.length > lastMessageCount && lastMessageCount > 0) {
-                        const latest = data.messages[data.messages.length - 1];
-                        if (latest.sender === friendUsername) {
-                            if ("Notification" in window && Notification.permission === "granted") {
-                                new Notification(`New message from @${friendUsername}`, {
-                                    body: latest.text || "Sent a photo 🖇️",
-                                    icon: "/favicon.ico"
-                                });
-                            }
-                        }
-                    }
-                    
-                    const needsScroll = data.messages.length !== lastMessageCount;
-                    lastMessageCount = data.messages.length;
-
-                    chatMessages.innerHTML = '';
-                    data.messages.forEach(msg => {
-                        const div = document.createElement('div');
-                        div.className = `message ${msg.sender === currentUsername ? 'sent' : 'received'}`;
-                        
-                        let contentHtml = '';
-                        if (msg.text) {
-                            contentHtml += `<div>${escapeHtml(msg.text)}</div>`;
-                        }
-                        if (msg.image) {
-                            contentHtml += `<img src="${msg.image}" alt="Attachment" onclick="window.open(this.src)" />`;
-                        }
-                        
-                        div.innerHTML = contentHtml;
-                        chatMessages.appendChild(div);
+            const reader = new FileReader();
+            reader.onload = async function(uploadEvent) {
+                const base64Image = uploadEvent.target.result;
+                try {
+                    await fetch('/api/send-message', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sender: currentUsername, receiver: friendUsername, image: base64Image })
                     });
+                    loadMessages();
+                } catch (err) {}
+            };
+            reader.readAsDataURL(file);
+        }
 
-                    if (isInitialLoad || needsScroll) {
-                        scrollToBottom();
-                        isInitialLoad = false;
-                    }
-                }
-            } catch (err) {}
+        // --- Photo Modal Manager ---
+        function openPhotoModal(imgSrc) {
+            const modal = document.getElementById('photoModal');
+            const modalImg = document.getElementById('modalImage');
+            const downloadLink = document.getElementById('downloadLink');
+
+            modalImg.src = imgSrc;
+            downloadLink.href = imgSrc;
+            modal.classList.add('active');
+        }
+
+        function closePhotoModal(e) {
+            if (e.target.id === 'photoModal') {
+                document.getElementById('photoModal').classList.remove('active');
+            }
         }
 
         function escapeHtml(text) {
+            if (!text) return '';
             const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
             return text.replace(/[&<>"']/g, function(m) { return map[m]; });
         }
 
+        document.getElementById('messageInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // Poll messages and typing status every 1.5 seconds
+        setInterval(() => {
+            loadMessages();
+            checkTypingStatus();
+        }, 1500);
+
         loadMessages();
-        setInterval(loadMessages, 3000);
     </script>
 </body>
 </html>

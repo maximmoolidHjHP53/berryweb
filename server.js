@@ -141,6 +141,25 @@ app.post('/api/respond-request', async (req, res) => {
     }
 });
 
+
+// In-memory typing tracker state
+const typingStatus = {};
+
+app.post('/api/typing', (req, res) => {
+    const { user, friend, typing } = req.body;
+    if (!typingStatus[friend]) typingStatus[friend] = {};
+    typingStatus[friend][user] = typing;
+    res.json({ success: true });
+});
+
+app.get('/api/get-typing', (req, res) => {
+    const { user, friend } = req.query; // user = friend checking on, friend = current user target
+    const isTyping = typingStatus[user] && typingStatus[user][friend] === true;
+    res.json({ isTyping });
+});
+
+
+
 // Add these routes to your server.js file alongside your other API routes
 
 app.get('/api/unread-counts', (req, res) => {
