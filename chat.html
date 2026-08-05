@@ -337,6 +337,10 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        // Apply theme immediately from localStorage
+        const savedTheme = localStorage.getItem('berry_theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+
         const urlParams = new URLSearchParams(window.location.search);
         const friendUsername = urlParams.get('friend');
         const currentUsername = localStorage.getItem('berry_session_user') || localStorage.getItem('username');
@@ -348,47 +352,50 @@
         document.getElementById('headerUsername').textContent = `@${friendUsername}`;
         document.getElementById('headerAvatar').textContent = friendUsername.charAt(0).toUpperCase();
 
-        let lastMessageCount = -1;
         const socket = io();
         socket.emit('join', currentUsername);
 
-        async function loadMessages(force = false) {
+        async function loadMessages() {
             try {
                 const res = await fetch(`/api/messages?user=${encodeURIComponent(currentUsername)}&friend=${encodeURIComponent(friendUsername)}`);
                 const data = await res.json();
                 const area = document.getElementById('messagesArea');
 
-                if (data.messages && (data.messages.length !== lastMessageCount || force)) {
-                    lastMessageCount = data.messages.length;
+                if (data.messages) {
                     area.innerHTML = '';
-
                     data.messages.forEach(msg => {
-                        const isMe = msg.sender === currentUsername;
-                        const bubble = document.createElement('div');
-                        bubble.className = `message-bubble ${isMe ? 'me' : 'other'}`;
-
-                        let contentHtml = '';
-                        if (msg.image) {
-                            contentHtml += `<img src="${msg.image}" class="message-image" onclick="openPhotoModal('${msg.image}')">`;
-                        }
-                        if (msg.text) {
-                            contentHtml += `<div>${escapeHtml(msg.text)}</div>`;
-                        }
-
-                        let statusIndicator = isMe ? (msg.read ? '<span>✓✓ Seen</span>' : '<span>✓ Sent</span>') : '';
-
-                        bubble.innerHTML = `
-                            ${contentHtml}
-                            <div class="message-meta">
-                                <span>${msg.time || ''}</span>
-                                ${statusIndicator}
-                            </div>
-                        `;
-                        area.appendChild(bubble);
+                        renderMessage(msg);
                     });
                     area.scrollTop = area.scrollHeight;
                 }
             } catch (err) {}
+        }
+
+        function renderMessage(msg) {
+            const area = document.getElementById('messagesArea');
+            const isMe = msg.sender === currentUsername;
+            const bubble = document.createElement('div');
+            bubble.className = `message-bubble ${isMe ? 'me' : 'other'}`;
+
+            let contentHtml = '';
+            if (msg.image) {
+                contentHtml += `<img src="${msg.image}" class="message-image" onclick="openPhotoModal('${msg.image}')">`;
+            }
+            if (msg.text) {
+                contentHtml += `<div>${escapeHtml(msg.text)}</div>`;
+            }
+
+            let statusIndicator = isMe ? (msg.read ? '<span>✓✓ Seen</span>' : '<span>✓ Sent</span>') : '';
+
+            bubble.innerHTML = `
+                ${contentHtml}
+                <div class="message-meta">
+                    <span>${msg.time || ''}</span>
+                    ${statusIndicator}
+                </div>
+            `;
+            area.appendChild(bubble);
+            area.scrollTop = area.scrollHeight;
         }
 
         function handleTypingInput() {
@@ -417,7 +424,6 @@
             if (!text) return;
 
             const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
             input.value = '';
             socket.emit('typing', { sender: currentUsername, receiver: friendUsername, typing: false });
 
@@ -429,38 +435,9 @@
                 time: timeStr
             };
 
+            // Only emit via socket, server handles persistence and broadcasting safely without local duplicates
             socket.emit('send_message', messagePayload);
-            
-            // Append locally right away to avoid duplicate fetches
-            appendMessageLocally(messagePayload);
-        }
-
-        function appendMessageLocally(msg) {
-            const area = document.getElementById('messagesArea');
-            const isMe = msg.sender === currentUsername;
-            const bubble = document.createElement('div');
-            bubble.className = `message-bubble ${isMe ? 'me' : 'other'}`;
-
-            let contentHtml = '';
-            if (msg.image) {
-                contentHtml += `<img src="${msg.image}" class="message-image" onclick="openPhotoModal('${msg.image}')">`;
-            }
-            if (msg.text) {
-                contentHtml += `<div>${escapeHtml(msg.text)}</div>`;
-            }
-
-            let statusIndicator = isMe ? '<span>✓ Sent</span>' : '';
-
-            bubble.innerHTML = `
-                ${contentHtml}
-                <div class="message-meta">
-                    <span>${msg.time || ''}</span>
-                    ${statusIndicator}
-                </div>
-            `;
-            area.appendChild(bubble);
-            area.scrollTop = area.scrollHeight;
-            lastMessageCount++;
+            renderMessage(messagePayload);
         }
 
         function handleImageUpload(e) {
@@ -479,14 +456,14 @@
                 };
 
                 socket.emit('send_message', messagePayload);
-                appendMessageLocally(messagePayload);
+                renderMessage(messagePayload);
             };
             reader.readAsDataURL(file);
         }
 
         socket.on('receive_message', (data) => {
             if (data.sender === friendUsername) {
-                loadMessages(true);
+                renderMessage(data);
             }
         });
 
@@ -513,8 +490,7 @@
             if (e.key === 'Enter') sendMessage();
         });
 
-        loadMessages(true);
-        setInterval(() => loadMessages(false), 3000);
+        loadMessages();
     </script>
 </body>
 </html>
