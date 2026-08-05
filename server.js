@@ -15,6 +15,38 @@ app.use(express.static(path.join(__dirname)));
 let users = {}; 
 let messages = []; 
 
+// === INSERT THESE API ROUTES HERE ===
+app.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
+    if (users[username] && users[username].password === password) {
+        res.json({ success: true, username });
+    } else {
+        res.json({ success: false, message: 'Invalid username or password!' });
+    }
+});
+
+app.post('/api/register', (req, res) => {
+    const { username, password } = req.body;
+    if (!username || !password) {
+        return res.json({ success: false, message: 'All fields are required!' });
+    }
+    if (users[username]) {
+        res.json({ success: false, message: 'Username already taken!' });
+    } else {
+        users[username] = {
+            password,
+            friends: [],
+            friendRequests: [],
+            bio: 'Hello! I am using Berryweb.',
+            avatar: '',
+            regDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        };
+        res.json({ success: true });
+    }
+});
+// ====================================
+
+
 // Page Routes (Landing page is home.html)
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
 app.get('/home', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
