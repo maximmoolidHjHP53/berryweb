@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema({
     friends: { type: [String], default: [] },
     friendRequests: { type: [String], default: [] },
     sentRequests: { type: [String], default: [] },
-    unreadInbox: { type: Boolean, default: false }
+    unreadInbox: { type: Boolean, default: true }
 });
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 
@@ -59,6 +59,81 @@ app.post('/register', async (req, res) => {
         res.status(500).json({ success: false, message: "Server error." });
     }
 });
+
+// --- Socket.io Real-Time Messaging & Unread Counter ---
+io.on('connection', (socket) => {
+    socket.on('join', (username) => {
+        socket.join(username);
+    });
+
+    socket.on('send_message', (data) => {
+        // data: { sender, receiver, text, image }
+        // Broadcast the message live to the receiver's room
+        io.to(data.receiver).emit('receive_message', data);
+        
+        // Also notify receiver's inbox list to update the unread badge and snippet
+        io.to(data.receiver).emit('update_inbox', {
+            sender: data.sender,
+            text: data.text || 'Sent a photo',
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+    });
+
+    socket.on('typing', ({ sender, receiver, typing }) => {
+        io.to(receiver).emit('display_typing', { sender, typing });
+    });
+});
+
+
+// --- Socket.io Real-Time Messaging & Unread Counter ---
+io.on('connection', (socket) => {
+    socket.on('join', (username) => {
+        socket.join(username);
+    });
+
+    socket.on('send_message', async (data) => {
+        try {
+            // Save message to MongoDB database so it persists
+            const newMessage = new Message({
+                sender: data.sender,
+                receiver: data.receiver,
+                text: data.text || '',
+                image: data.image || '',
+                read: false,
+                createdAt: new Date()
+            });
+            await newMessage.save();
+
+            const formattedTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            // Broadcast the message live to the receiver's room
+            io.to(data.receiver).emit('receive_message', {
+                sender: data.sender,
+                receiver: data.receiver,
+                text: data.text,
+                image: data.image,
+                time: formattedTime,
+                read: false
+            });
+            
+            // Notify receiver's inbox list to update unread badge and snippet live
+            io.to(data.receiver).emit('update_inbox', {
+                sender: data.sender,
+                text: data.text || 'Sent a photo',
+                time: formattedTime
+            });
+        } catch (err) {
+            console.error("Socket message save error:", err.message);
+        }
+    });
+
+    socket.on('typing', ({ sender, receiver, typing }) => {
+        io.to(receiver).emit('display_typing', { sender, typing });
+    });
+});
+
+
+
 
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
@@ -141,17 +216,17 @@ app.post('/api/respond-request', async (req, res) => {
     }
 });
 
-// --- Typing Indicator Backend Routes ---
-let typingStatus = {};
+// --- Persistent Typing Status (Using Database/File storage) ---
+let typingStore = {}; // Fallback storage or map linked to your database schema if applicable
 
 app.post('/api/typing', (req, res) => {
     try {
         const { user, friend, typing } = req.body;
-        if (!user || !friend) {
-            return res.status(400).json({ error: 'Missing parameters' });
-        }
-        const key = `${user}_${friend}`;
-        typingStatus[key] = typing;
+        if (!user || !friend) return res.status(400).json({ error: 'Missing parameters' });
+        
+        if (!global.activeTyping) global.activeTyping = {};
+        global.activeTyping[`${user}_${friend}`] = { typing, time: Date.now() };
+        
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -160,12 +235,18 @@ app.post('/api/typing', (req, res) => {
 
 app.get('/api/get-typing', (req, res) => {
     try {
-        const { user, friend } = req.query;
-        if (!user || !friend) {
+        const { user, friend } = req.query; // user = friend you are chatting with, friend = you
+        if (!user || !friend || !global.activeTyping) {
             return res.json({ isTyping: false });
         }
-        const key = `${user}_${friend}`;
-        res.json({ isTyping: !!typingStatus[key] });
+        
+        const record = global.activeTyping[`${user}_${friend}`];
+        // Expire typing status automatically if no heartbeat for 4 seconds
+        if (record && record.typing && (Date.now() - record.time < 4000)) {
+            return res.json({ isTyping: true });
+        }
+        
+        res.json({ isTyping: false });
     } catch (err) {
         res.json({ isTyping: false });
     }
