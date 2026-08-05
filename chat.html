@@ -337,13 +337,17 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Apply theme instantly from localStorage
+        // Apply theme instantly
         const savedTheme = localStorage.getItem('berry_theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
 
         const urlParams = new URLSearchParams(window.location.search);
         let friendUsername = urlParams.get('friend');
-        const currentUsername = localStorage.getItem('berry_session_user') || localStorage.getItem('username');
+
+        // Robust user checking across all possible localStorage keys used in your app
+        const currentUsername = localStorage.getItem('berry_session_user') || 
+                                localStorage.getItem('username') || 
+                                localStorage.getItem('currentUser');
 
         if (!currentUsername || !friendUsername) {
             window.location.replace('/dashboard');
@@ -445,7 +449,7 @@
                 time: timeStr
             };
 
-            // Instant local render + socket emit (No lag, no reloading!)
+            // Instant local render and send over socket right away
             renderMessage(messagePayload, true);
             socket.emit('send_message', messagePayload);
         }
@@ -471,7 +475,6 @@
             reader.readAsDataURL(file);
         }
 
-        // Real-time listener: Appends incoming messages instantly without resetting the whole page
         socket.on('receive_message', (data) => {
             if (data.sender === friendUsername || data.receiver === friendUsername) {
                 renderMessage(data, true);
@@ -501,7 +504,6 @@
             if (e.key === 'Enter') sendMessage();
         });
 
-        // Load messages once upon entering chat
         loadInitialMessages();
     </script>
 </body>
