@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - BerryWeb</title>
+    <title>Messenger - BerryWeb</title>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #0e1621;
             color: #f5f5f5;
             margin: 0;
-            padding: 20px;
+            padding: 16px;
             display: flex;
             justify-content: center;
         }
@@ -22,11 +22,11 @@
 
         .card {
             background-color: #17212b;
-            padding: 20px;
+            padding: 16px;
             border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-            margin-bottom: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            margin-bottom: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
         }
 
         .profile-header {
@@ -38,16 +38,16 @@
         .profile-info {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
         }
 
         .avatar {
-            width: 50px;
-            height: 50px;
+            width: 46px;
+            height: 46px;
             background-color: #2fa572;
             color: #0e1621;
-            font-size: 24px;
-            font-weight: bold;
+            font-size: 20px;
+            font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -56,12 +56,13 @@
         }
 
         .user-details h3 {
-            margin: 0 0 4px 0;
-            font-size: 18px;
+            margin: 0 0 2px 0;
+            font-size: 16px;
+            font-weight: 600;
         }
 
         .user-details span {
-            font-size: 13px;
+            font-size: 12px;
             color: #2fa572;
             cursor: pointer;
         }
@@ -72,8 +73,8 @@
         }
 
         .btn {
-            padding: 8px 14px;
-            border-radius: 6px;
+            padding: 8px 12px;
+            border-radius: 8px;
             font-size: 13px;
             font-weight: 600;
             cursor: pointer;
@@ -86,15 +87,14 @@
         }
 
         .btn-inbox {
-            background-color: #2b3b4c;
+            background-color: #242f3d;
             color: #f5f5f5;
         }
 
-        /* Red Unread Counter Badge for Inbox */
         .badge-counter {
             position: absolute;
-            top: -6px;
-            right: -6px;
+            top: -5px;
+            right: -5px;
             background-color: #eb5757;
             color: white;
             font-size: 10px;
@@ -105,8 +105,8 @@
         }
 
         .btn-logout {
-            background-color: #eb5757;
-            color: #fff;
+            background-color: rgba(235, 87, 87, 0.15);
+            color: #eb5757;
         }
 
         .btn:hover {
@@ -114,10 +114,11 @@
         }
 
         h4 {
-            margin: 0 0 12px 0;
-            font-size: 14px;
-            color: #8a96a3;
-            letter-spacing: 0.5px;
+            margin: 0 0 10px 0;
+            font-size: 12px;
+            color: #707e8c;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
         }
 
         .search-wrapper {
@@ -128,7 +129,7 @@
             width: 100%;
             padding: 10px 14px;
             background-color: #0e1621;
-            border: 1px solid #374151;
+            border: 1px solid #242f3d;
             border-radius: 8px;
             color: #f5f5f5;
             box-sizing: border-box;
@@ -142,20 +143,24 @@
 
         .search-results {
             background: #0e1621;
-            border: 1px solid #374151;
+            border: 1px solid #242f3d;
             border-radius: 8px;
-            margin-top: 5px;
+            margin-top: 6px;
             max-height: 160px;
             overflow-y: auto;
             display: none;
+            position: absolute;
+            width: 100%;
+            z-index: 10;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
         }
 
         .search-result-item {
-            padding: 10px;
+            padding: 10px 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.03);
             font-size: 14px;
         }
 
@@ -163,19 +168,19 @@
             background: #2fa572;
             color: #0e1621;
             border: none;
-            padding: 5px 12px;
+            padding: 5px 10px;
             border-radius: 6px;
             font-weight: 600;
             cursor: pointer;
+            font-size: 12px;
         }
 
         .search-result-item button.pending {
-            background: #4b5563;
-            color: #d1d5db;
+            background: #242f3d;
+            color: #8a96a3;
             cursor: default;
         }
 
-        /* Friend List Section */
         .friend-list {
             list-style: none;
             padding: 0;
@@ -186,14 +191,15 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 10px 8px;
+            border-radius: 8px;
+            margin-bottom: 4px;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background 0.15s;
         }
 
         .friend-item:hover {
-            background: rgba(255,255,255,0.02);
+            background: rgba(255, 255, 255, 0.03);
         }
 
         .friend-info {
@@ -203,12 +209,12 @@
         }
 
         .friend-avatar {
-            width: 36px;
-            height: 36px;
-            background-color: #374151;
+            width: 40px;
+            height: 40px;
+            background-color: #242f3d;
             color: #2fa572;
             font-size: 15px;
-            font-weight: bold;
+            font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -216,13 +222,10 @@
             text-transform: uppercase;
         }
 
-        .friend-meta span {
-            display: block;
-        }
-
         .friend-name {
             font-size: 14px;
             font-weight: 600;
+            color: #f5f5f5;
         }
 
         .friend-action {
@@ -242,17 +245,17 @@
         }
 
         .msg-icon-text {
-            font-size: 12px;
+            font-size: 13px;
             color: #2fa572;
             font-weight: 600;
         }
 
         .no-friends {
-            color: #8a96a3;
+            color: #707e8c;
             font-size: 13px;
             margin: 0;
             text-align: center;
-            padding: 10px 0;
+            padding: 12px 0;
         }
     </style>
 </head>
@@ -277,17 +280,17 @@
         </div>
 
         <div class="card">
-            <h4>FIND USERS & ADD FRIENDS</h4>
+            <h4>Global User Search</h4>
             <div class="search-wrapper">
-                <input type="text" id="searchInput" class="search-input" placeholder="@ search username...">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search username...">
                 <div id="searchResults" class="search-results"></div>
             </div>
         </div>
 
         <div class="card">
-            <h4>MY FRIENDLIST</h4>
+            <h4>My Friendlist</h4>
             <ul id="friendList" class="friend-list">
-                <li class="no-friends">Loading friendlist...</li>
+                <li class="no-friends">Loading chats...</li>
             </ul>
         </div>
     </div>
@@ -310,14 +313,11 @@
             window.location.href = '/inbox';
         }
 
-        // Live Search Input Handler
         const searchInput = document.getElementById('searchInput');
         const searchResults = document.getElementById('searchResults');
 
         searchInput.addEventListener('input', async (e) => {
             const query = e.target.value.trim();
-            
-            // If search bar is completely blank, hide results dropdown
             if (query.length === 0) {
                 searchResults.style.display = 'none';
                 searchResults.innerHTML = '';
@@ -341,24 +341,21 @@
                         } else if (user.status === 'pending_sent') {
                             btnHtml = `<button class="pending" disabled>Pending</button>`;
                         } else if (user.status === 'pending_received') {
-                            btnHtml = `<button class="pending" disabled>Request Sent You</button>`;
+                            btnHtml = `<button class="pending" disabled>Incoming</button>`;
                         } else {
                             btnHtml = `<button onclick="sendFriendRequest('${user.username}', this)">Add Friend</button>`;
                         }
 
-                        div.innerHTML = `<span>@${user.username}</span> ${btnHtml}`;
+                        div.innerHTML = `<span>@${user.username}</span>${btnHtml}`;
                         searchResults.appendChild(div);
                     });
                 } else {
                     searchResults.style.display = 'block';
-                    searchResults.innerHTML = `<div style="padding:10px; color:#8a96a3; font-size:13px; text-align:center;">No users found</div>`;
+                    searchResults.innerHTML = `<div style="padding:10px; color:#707e8c; font-size:13px; text-align:center;">No users found</div>`;
                 }
-            } catch (err) {
-                console.error("Search error", err);
-            }
+            } catch (err) {}
         });
 
-        // Send Friend Request / Turn to Pending
         async function sendFriendRequest(friendUsername, btnElement) {
             try {
                 const res = await fetch('/api/send-request', {
@@ -371,15 +368,10 @@
                     btnElement.textContent = 'Pending';
                     btnElement.className = 'pending';
                     btnElement.disabled = true;
-                } else {
-                    alert(data.message);
                 }
-            } catch (err) {
-                alert("Error sending request.");
-            }
+            } catch (err) {}
         }
 
-        // Load Confirmed Friendlist (Only True Friends)
         async function loadFriends() {
             const friendListEl = document.getElementById('friendList');
             try {
@@ -396,9 +388,7 @@
                         li.innerHTML = `
                             <div class="friend-info">
                                 <div class="friend-avatar">${friend.username.charAt(0)}</div>
-                                <div class="friend-meta">
-                                    <span class="friend-name">@${friend.username}</span>
-                                </div>
+                                <span class="friend-name">@${friend.username}</span>
                             </div>
                             <div class="friend-action">
                                 <span class="msg-badge" id="badge-${friend.username}">${friend.unreadCount || 0}</span>
@@ -412,14 +402,13 @@
                         }
                     });
                 } else {
-                    friendListEl.innerHTML = `<li class="no-friends">No friends added yet. Search above to connect!</li>`;
+                    friendListEl.innerHTML = `<li class="no-friends">No active chats. Search above to add friends!</li>`;
                 }
             } catch (err) {
                 friendListEl.innerHTML = `<li class="no-friends">Failed to load friendlist.</li>`;
             }
         }
 
-        // Check Inbox Notification Badge Count
         async function checkInboxBadge() {
             try {
                 const res = await fetch(`/api/inbox-count?user=${encodeURIComponent(currentUsername)}`);
@@ -436,7 +425,7 @@
 
         loadFriends();
         checkInboxBadge();
-        setInterval(checkInboxBadge, 5000); // Check notifications live every 5s
+        setInterval(checkInboxBadge, 4000);
     </script>
 </body>
 </html>

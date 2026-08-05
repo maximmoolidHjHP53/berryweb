@@ -33,6 +33,7 @@ const User = mongoose.models.User || mongoose.model('User', userSchema);
 
 // Routes
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'chat.html')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
 app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));

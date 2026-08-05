@@ -3,262 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Berryweb - Live Chat</title>
+    <title>Chat - BerryWeb</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body {
-            background-color: #0f1117; color: #ffffff; height: 100vh; display: flex; flex-direction: column;
-            animation: fadeInPage 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; opacity: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0e1621;
+            color: #f5f5f5;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
         }
-        @keyframes fadeInPage { to { opacity: 1; } }
 
-        /* Chat Header */
         .chat-header {
-            background: #1e222d; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 15px 20px; display: flex; align-items: center; justify-content: space-between;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 10;
+            background-color: #17212b;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
         }
-        .chat-header-left { display: flex; align-items: center; gap: 12px; }
+
         .back-btn {
-            background: #252a37; color: #94a3b8; border: 1px solid rgba(255, 255, 255, 0.04);
-            padding: 8px 12px; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 600;
+            color: #2fa572;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: bold;
         }
-        .back-btn:hover { color: #fff; background: #2f3648; }
 
         .chat-avatar {
-            width: 40px; height: 40px; border-radius: 50%; background: #22c55e;
-            display: flex; align-items: center; justify-content: center; font-weight: bold;
-            font-size: 16px; overflow: hidden; color: #fff;
+            width: 36px;
+            height: 36px;
+            background-color: #242f3d;
+            color: #2fa572;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            text-transform: uppercase;
+            font-size: 14px;
         }
-        .chat-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-        .chat-user-info h3 { font-size: 16px; font-weight: 600; }
-        .chat-status { font-size: 11px; color: #94a3b8; }
+        .chat-title {
+            font-size: 15px;
+            font-weight: 600;
+        }
 
-        /* Messages Body Box */
-        .chat-messages-container {
-            flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
-            background: #0f1117;
+        .chat-messages {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
-        .message-bubble {
-            max-width: 70%; padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.4;
-            word-break: break-word; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
-        .message-incoming {
-            background: #1e222d; align-self: flex-start; border-bottom-left-radius: 4px;
-            border: 1px solid rgba(255, 255, 255, 0.05); color: #fff;
-        }
-        .message-outgoing {
-            background: #22c55e; align-self: flex-end; border-bottom-right-radius: 4px; color: #fff;
-        }
-        .message-image {
-            max-width: 100%; border-radius: 8px; margin-bottom: 6px; display: block; object-fit: cover; max-height: 220px;
-        }
-        .message-time { font-size: 9px; opacity: 0.7; display: block; text-align: right; margin-top: 4px; }
 
-        /* Input Footer Area */
-        .chat-footer {
-            background: #1e222d; border-top: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 15px 20px; display: flex; align-items: center; gap: 10px;
+        .message {
+            max-width: 75%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            word-break: break-word;
+            line-height: 1.4;
         }
+
+        .message.sent {
+            background-color: #2b5278; /* Telegram blue-accented sent bubble */
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+
+        .message.received {
+            background-color: #182533; /* Telegram dark-grey received bubble */
+            color: #f5f5f5;
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+        }
+
+        .chat-input-bar {
+            background-color: #17212b;
+            padding: 12px 16px;
+            display: flex;
+            gap: 10px;
+            border-top: 1px solid rgba(255,255,255,0.04);
+        }
+
         .chat-input {
-            flex: 1; background: #252a37; border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px; padding: 12px 15px; color: white; font-size: 14px; outline: none;
+            flex: 1;
+            padding: 10px 14px;
+            background-color: #0e1621;
+            border: 1px solid #242f3d;
+            border-radius: 8px;
+            color: #f5f5f5;
+            outline: none;
+            font-size: 14px;
         }
-        .chat-input:focus { border-color: #22c55e; }
-        
-        .attach-btn {
-            background: #334155; color: white; border: none; padding: 11px 14px;
-            border-radius: 12px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+
+        .chat-input:focus {
+            border-color: #2fa572;
         }
-        .attach-btn:hover { background: #475569; }
 
         .send-btn {
-            background: #22c55e; color: white; border: none; padding: 12px 20px;
-            border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 14px;
-        }
-        .send-btn:hover { background: #16a34a; }
-
-        .empty-chat {
-            text-align: center; color: #64748b; margin: auto; font-size: 14px;
+            background-color: #2fa572;
+            color: #0e1621;
+            border: none;
+            padding: 0 16px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
 
     <div class="chat-header">
-        <div class="chat-header-left">
-            <a href="/dashboard" class="back-btn">&larr; Back</a>
-            <div class="chat-avatar" id="chatHeaderAvatar">
-                <span id="chatHeaderInitial">?</span>
-            </div>
-            <div class="chat-user-info">
-                <h3 id="chatHeaderUsername">Select a friend</h3>
-                <span class="chat-status" id="chatHeaderStatus">offline</span>
-            </div>
-        </div>
+        <a href="/dashboard" class="back-btn">&larr;</a>
+        <div class="chat-avatar" id="chatAvatar">?</div>
+        <div class="chat-title" id="chatTitle">Chat</div>
     </div>
 
-    <div class="chat-messages-container" id="chatMessagesContainer">
-        <div class="empty-chat">Select a friend from your friendlist to start chatting.</div>
-    </div>
+    <div class="chat-messages" id="chatMessages"></div>
 
-    <div class="chat-footer" id="chatFooter" style="display: none;">
-        <label class="attach-btn" title="Send Photo">
-            📷
-            <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageMessage(event)">
-        </label>
-        <input type="text" id="messageInput" class="chat-input" placeholder="Type a message..." autocomplete="off" oninput="handleTypingInput()">
-        <button class="send-btn" onclick="sendMessage()">Send</button>
-    </div>
+    <form class="chat-input-bar" id="chatForm">
+        <input type="text" id="messageInput" class="chat-input" placeholder="Write a message..." required autocomplete="off">
+        <button type="submit" class="send-btn">Send</button>
+    </form>
 
-    <script src="/socket.io/socket.io.js"></script>
     <script>
-        const currentUser = localStorage.getItem('username') || localStorage.getItem('berry_user');
-        if (!currentUser) {
-            window.location.href = '/login';
-        }
-
+        const currentUsername = localStorage.getItem('username') || localStorage.getItem('berry_user');
         const urlParams = new URLSearchParams(window.location.search);
-        const chatPartner = urlParams.get('to');
+        const friendUsername = urlParams.get('friend');
 
-        const socket = io();
-        const socket = io("http://localhost:3000", {
-    transports: ['polling', 'websocket']
-});
-
-        let typingTimeout = null;
-
-        if (chatPartner) {
-            document.getElementById('chatHeaderUsername').textContent = '@' + chatPartner;
-            document.getElementById('chatHeaderInitial').textContent = chatPartner.charAt(0).toUpperCase();
-            document.getElementById('chatFooter').style.display = 'flex';
-            
-            socket.emit('user_online', currentUser);
-            socket.emit('get_messages', { user1: currentUser, user2: chatPartner });
-            socket.emit('get_user_data', chatPartner);
+        if (!currentUsername || !friendUsername) {
+            window.location.href = '/dashboard';
         }
 
-        socket.on('user_data_response', (data) => {
-            if (data && data.avatar && chatPartner) {
-                document.getElementById('chatHeaderAvatar').innerHTML = `<img src="${data.avatar}" alt="Avatar">`;
-            }
-        });
+        document.getElementById('chatTitle').textContent = `@${friendUsername}`;
+        document.getElementById('chatAvatar').textContent = friendUsername.charAt(0).toUpperCase();
 
-        socket.on('loaded_messages', (messages) => {
-            renderMessages(messages);
-        });
-
-        socket.on('receive_message', (msg) => {
-            if ((msg.sender === chatPartner && msg.receiver === currentUser) || 
-                (msg.sender === currentUser && msg.receiver === chatPartner)) {
-                appendMessageBubble(msg);
-            }
-        });
-
-        socket.on('typing_status', (data) => {
-            if (data.sender === chatPartner && data.receiver === currentUser) {
-                document.getElementById('chatHeaderStatus').textContent = data.isTyping ? 'typing...' : 'online';
-            }
-        });
-
-        function renderMessages(messages) {
-            const container = document.getElementById('chatMessagesContainer');
-            if (messages.length === 0) {
-                container.innerHTML = `<div class="empty-chat">No messages yet. Say hello to @${chatPartner}!</div>`;
-                return;
-            }
-            container.innerHTML = '';
-            messages.forEach(msg => appendMessageBubble(msg));
-        }
-
-        function appendMessageBubble(msg) {
-            const container = document.getElementById('chatMessagesContainer');
-            if (container.querySelector('.empty-chat')) {
+        async function loadMessages() {
+            try {
+                const res = await fetch(`/api/messages?user=${encodeURIComponent(currentUsername)}&friend=${encodeURIComponent(friendUsername)}`);
+                const data = await res.json();
+                const container = document.getElementById('chatMessages');
+                
                 container.innerHTML = '';
-            }
-
-            const isOutgoing = msg.sender === currentUser;
-            const bubble = document.createElement('div');
-            bubble.className = `message-bubble ${isOutgoing ? 'message-outgoing' : 'message-incoming'}`;
-            
-            let contentHtml = '';
-            if (msg.image) {
-                contentHtml += `<img src="${msg.image}" class="message-image" alt="Sent Photo">`;
-            }
-            if (msg.text) {
-                contentHtml += `<div>${escapeHtml(msg.text)}</div>`;
-            }
-
-            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            bubble.innerHTML = `
-                ${contentHtml}
-                <span class="message-time">${timeStr}</span>
-            `;
-            container.appendChild(bubble);
-            container.scrollTop = container.scrollHeight;
+                if (data.messages) {
+                    data.messages.forEach(msg => {
+                        const div = document.createElement('div');
+                        div.className = `message ${msg.sender === currentUsername ? 'sent' : 'received'}`;
+                        div.textContent = msg.text;
+                        container.appendChild(div);
+                    });
+                    container.scrollTop = container.scrollHeight;
+                }
+            } catch (err) {}
         }
 
-        function sendMessage() {
+        document.getElementById('chatForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
             const input = document.getElementById('messageInput');
             const text = input.value.trim();
-            if (!text || !chatPartner) return;
+            if (!text) return;
 
-            const msgData = {
-                sender: currentUser,
-                receiver: chatPartner,
-                text: text,
-                image: null,
-                timestamp: Date.now()
-            };
-
-            socket.emit('send_message', msgData);
-            input.value = '';
-            socket.emit('typing', { sender: currentUser, receiver: chatPartner, isTyping: false });
-        }
-
-        function handleImageMessage(event) {
-            const file = event.target.files[0];
-            if (!file || !chatPartner) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const base64Image = e.target.result;
-                const msgData = {
-                    sender: currentUser,
-                    receiver: chatPartner,
-                    text: '',
-                    image: base64Image,
-                    timestamp: Date.now()
-                };
-
-                socket.emit('send_message', msgData);
-                event.target.value = ''; // Reset file input
-            };
-            reader.readAsDataURL(file);
-        }
-
-        document.getElementById('messageInput').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
+            try {
+                const res = await fetch('/api/send-message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sender: currentUsername, receiver: friendUsername, text })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    input.value = '';
+                    loadMessages();
+                }
+            } catch (err) {}
         });
 
-        function handleTypingInput() {
-            if (!chatPartner) return;
-            socket.emit('typing', { sender: currentUser, receiver: chatPartner, isTyping: true });
-
-            clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(() => {
-                socket.emit('typing', { sender: currentUser, receiver: chatPartner, isTyping: false });
-            }, 1200);
-        }
-
-        function escapeHtml(text) {
-            if (!text) return '';
-            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
-        }
+        loadMessages();
+        setInterval(loadMessages, 3000); // Live poll messages every 3s
     </script>
 </body>
 </html>
