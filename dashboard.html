@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Berryweb - Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -49,8 +49,8 @@
             margin-bottom: 20px;
         }
 
-        .header-card h2 { font-size: 1.4rem; }
-        .nav-btns { display: flex; gap: 10px; }
+        .header-card h2 { font-size: 1.3rem; }
+        .nav-btns { display: flex; gap: 10px; align-items: center; }
 
         .btn {
             background: var(--accent-green);
@@ -71,6 +71,45 @@
         .btn:hover { background: var(--accent-green-hover); }
         .btn-danger { background: #eb5757; }
         .btn-danger:hover { background: #d33b3b; }
+
+        .inbox-btn {
+            position: relative;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-glass);
+            color: var(--text-main);
+        }
+        .inbox-btn:hover { background: var(--border-glass); }
+
+        .inbox-badge {
+            position: absolute;
+            top: -6px; right: -6px;
+            background: #eb5757;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+            display: none;
+        }
+
+        /* Search Bar Section */
+        .search-section {
+            margin-bottom: 20px;
+        }
+
+        .search-bar {
+            width: 100%;
+            background: var(--bg-secondary);
+            border: 1.5px solid var(--border-glass);
+            padding: 14px 18px;
+            border-radius: 14px;
+            color: var(--text-main);
+            font-size: 0.95ln;
+            outline: none;
+            transition: var(--transition-smooth);
+        }
+
+        .search-bar:focus { border-color: var(--accent-green); }
 
         .section-card {
             background: var(--bg-secondary);
@@ -167,6 +206,42 @@
             box-shadow: 0 2px 8px rgba(47, 165, 114, 0.4);
         }
 
+        /* Modal Overlay for Inbox */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-glass);
+            width: 100%;
+            max-width: 450px;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border-glass);
+            padding-bottom: 10px;
+        }
+
+        .close-modal {
+            background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer;
+        }
+
         @media (max-width: 600px) {
             body { padding: 10px; }
             .header-card { flex-direction: column; gap: 14px; align-items: flex-start; }
@@ -175,13 +250,20 @@
     </style>
 </head>
 <body>
-
-    <div class="dashboard-container">
+  <div class="dashboard-container">
         <div class="header-card">
             <h2>Welcome, <span id="displayUsername">User</span></h2>
             <div class="nav-btns">
-                <button onclick="logout()" class="btn btn-danger"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                <button class="btn inbox-btn" onclick="toggleInboxModal()">
+                    <i class="fa-solid fa-inbox"></i> Inbox
+                    <span class="inbox-badge" id="inboxBadge">0</span>
+                </button>
+                <button onclick="logout()" class="btn btn-danger"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
+        </div>
+
+        <div class="search-section">
+            <input type="text" id="searchInput" class="search-bar" placeholder="🔍 Search users to add..." oninput="filterUsers()">
         </div>
 
         <div class="section-card">
@@ -192,15 +274,20 @@
         </div>
 
         <div class="section-card">
-            <h3><i class="fa-solid fa-user-plus"></i> Find Users</h3>
+            <h3><i class="fa-solid fa-user-plus"></i> Discover Users</h3>
             <div class="list-container" id="allUsersList">
                 <div style="color: var(--text-muted); text-align: center; padding: 10px;">Loading users...</div>
             </div>
         </div>
+    </div>
 
-        <div class="section-card">
-            <h3><i class="fa-solid fa-bell"></i> Friend Requests</h3>
-            <div class="list-container" id="requestsList">
+    <div class="modal-overlay" id="inboxModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-inbox"></i> Friend Requests Inbox</h3>
+                <button class="close-modal" onclick="toggleInboxModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="list-container" id="requestsList" style="max-height: 250px;">
                 <div style="color: var(--text-muted); text-align: center; padding: 10px;">No pending requests.</div>
             </div>
         </div>
@@ -216,6 +303,9 @@
 
         let unreadCounts = {};
         let lastMessages = {};
+        let cachedFriends = [];
+        let cachedAllUsers = [];
+        let cachedRequests = [];
 
         function loadDashboardData() {
             socket.emit('get_user_data', currentUser);
@@ -223,14 +313,16 @@
         }
 
         socket.on('user_data_response', (data) => {
-            renderFriends(data.friends || []);
-            renderRequests(data.friendRequests || []);
+            cachedFriends = data.friends || [];
+            cachedRequests = data.friendRequests || [];
+            renderFriends(cachedFriends);
+            renderRequests(cachedRequests);
+            updateInboxBadge(cachedRequests.length);
         });
 
-        let cachedAllUsers = [];
         socket.on('all_users_list', (users) => {
             cachedAllUsers = users;
-            socket.emit('get_user_data', currentUser);
+            filterUsers();
         });
 
         socket.on('refresh_friends_' + currentUser, loadDashboardData);
@@ -274,7 +366,6 @@
 
                 const div = document.createElement('div');
                 div.className = 'list-item';
-                // Direct jump to chat box when clicking friend box
                 div.onclick = () => { window.location.href = `/chat?with=${friend}`; };
                 div.innerHTML = `
                     <div class="user-meta">
@@ -286,30 +377,35 @@
                     </div>
                     <div class="friend-actions" onclick="event.stopPropagation()">
                         <div class="unread-badge" id="badge_${friend}" style="display: ${count > 0 ? 'inline-block' : 'none'};">${count}</div>
-                        <button class="btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="window.location.href='/chat?with=${friend}'"><i class="fa-solid fa-comment"></i> Chat</button>
+                        <button class="btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="window.location.href='/chat?with=${friend}'"><i class="fa-solid fa-comment"></i></button>
                     </div>
                 `;
                 container.appendChild(div);
             });
-
-            renderAllUsers(cachedAllUsers, friends, []);
         }
 
-        function renderAllUsers(users, friends, requests) {
+        // Live Search Filter Function
+        function filterUsers() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
             const container = document.getElementById('allUsersList');
-            const availableUsers = users.filter(u => u !== currentUser && !friends.includes(u) && !requests.includes(u));
+            
+            const availableUsers = cachedAllUsers.filter(u => 
+                u !== currentUser && 
+                !cachedFriends.includes(u) && 
+                !cachedRequests.includes(u) &&
+                u.toLowerCase().includes(query)
+            );
 
             if (availableUsers.length === 0) {
-                container.innerHTML = `<div style="color: var(--text-muted); text-align: center; padding: 10px;">No other users found.</div>`;
+                container.innerHTML = `<div style="color: var(--text-muted); text-align: center; padding: 10px;">No users found.</div>`;
                 return;
             }
 
             container.innerHTML = '';
-            availableUsers.force && availableUsers.forEach(user => {}); // safety
             availableUsers.forEach(user => {
                 const div = document.createElement('div');
                 div.className = 'list-item';
-                div.onclick = null; // Don't redirect on non-friend boxes
+                div.onclick = null;
                 div.innerHTML = `
                     <div class="user-meta">
                         <div class="avatar">${user.charAt(0).toUpperCase()}</div>
@@ -336,7 +432,6 @@
             requests.forEach(requester => {
                 const div = document.createElement('div');
                 div.className = 'list-item';
-                div.onclick = null;
                 div.innerHTML = `
                     <div class="user-meta">
                         <div class="avatar">${requester.charAt(0).toUpperCase()}</div>
@@ -344,12 +439,28 @@
                             <div class="username-text">${requester}</div>
                         </div>
                     </div>
-                    <div class="friend-actions">
-                        <button class="btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="respondRequest('${requester}', 'accept')">Accept</button>
+                    <div class="friend-actions" style="gap: 6px;">
+                        <button class="btn" style="padding: 6px 10px; font-size: 0.75rem;" onclick="respondRequest('${requester}', 'accept')">Confirm</button>
+                        <button class="btn btn-danger" style="padding: 6px 10px; font-size: 0.75rem;" onclick="respondRequest('${requester}', 'decline')">Decline</button>
                     </div>
                 `;
                 container.appendChild(div);
             });
+        }
+
+        function updateInboxBadge(count) {
+            const badge = document.getElementById('inboxBadge');
+            if (count > 0) {
+                badge.textContent = count;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function toggleInboxModal() {
+            const modal = document.getElementById('inboxModal');
+            modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
         }
 
         function sendRequest(receiver) {
