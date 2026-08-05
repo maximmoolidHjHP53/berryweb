@@ -30,8 +30,6 @@
         .dashboard-container {
             max-width: 800px;
             margin: 0 auto;
-            position: relative;
-            padding-bottom: 80px; /* Space for search dropdown above */
         }
 
         .header-card {
@@ -95,7 +93,7 @@
             display: none;
         }
 
-        /* Search Section with Dropdown Positioned Above */
+        /* Search Section with Normal Dropdown Below Search Bar */
         .search-section {
             margin-bottom: 20px;
             position: relative;
@@ -115,17 +113,17 @@
 
         .search-bar:focus { border-color: var(--accent-green); }
 
-        /* Search Results Card positioned ABOVE search bar to prevent keyboard blocking */
+        /* Dropdown results overlay positioned cleanly right underneath the search bar */
         .search-results-dropdown {
             position: absolute;
-            bottom: calc(100% + 8px);
+            top: calc(100% + 8px);
             left: 0;
             width: 100%;
             background: var(--bg-secondary);
             border: 1px solid var(--border-glass);
             padding: 16px;
             border-radius: 16px;
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.6);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
             z-index: 50;
             display: none;
         }
@@ -276,7 +274,6 @@
     </style>
 </head>
 <body>
-
     <div class="dashboard-container">
         <div class="header-card">
             <h2>Welcome, <span id="displayUsername">User</span></h2>
@@ -320,7 +317,6 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Prevent phone back button from returning to login page
         history.pushState(null, null, window.location.href);
         window.onpopstate = function () {
             history.pushState(null, null, window.location.href);
@@ -470,6 +466,7 @@
                 searchList.appendChild(div);
             });
         }
+
         function renderRequests(requests) {
             const container = document.getElementById('requestsList');
             if (requests.length === 0) {
