@@ -11,7 +11,6 @@
             --bg-secondary: #17212b;
             --bg-tertiary: #242f3d;
             --accent-blue: #2fa572;
-            --accent-hover: #37b880;
             --text-main: #f5f5f5;
             --text-muted: #8a96a3;
             --border-glass: rgba(255, 255, 255, 0.08);
@@ -41,7 +40,6 @@
             background: var(--bg-primary);
         }
 
-        /* Full Width Telegram Style Layout */
         .sidebar {
             width: 100%;
             height: 100vh;
@@ -52,7 +50,6 @@
             z-index: 5;
         }
 
-        /* Ultra Realistic Header */
         .sidebar-header {
             padding: 16px 20px;
             display: flex;
@@ -75,10 +72,6 @@
             transition: var(--transition-smooth);
         }
 
-        .user-profile-preview:hover {
-            background: rgba(255, 255, 255, 0.04);
-        }
-
         .avatar-circle {
             width: 44px;
             height: 44px;
@@ -91,26 +84,16 @@
             font-size: 1.1rem;
             color: white;
             box-shadow: 0 4px 12px rgba(47, 165, 114, 0.3);
-            transition: var(--transition-smooth);
-            position: relative;
-        }
-
-        .avatar-circle:hover {
-            transform: scale(1.05);
         }
 
         .user-identity h3 {
             font-size: 1rem;
             font-weight: 600;
-            letter-spacing: 0.2px;
         }
 
         .user-identity span {
             font-size: 0.75rem;
             color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 5px;
         }
 
         .header-actions {
@@ -120,7 +103,6 @@
             position: relative;
         }
 
-        /* Settings Icon Button */
         .settings-btn {
             background: rgba(255, 255, 255, 0.04);
             border: 1px solid var(--border-glass);
@@ -132,34 +114,30 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
             transition: var(--transition-smooth);
         }
 
         .settings-btn:hover {
             background: rgba(47, 165, 114, 0.15);
             color: var(--accent-blue);
-            border-color: rgba(47, 165, 114, 0.3);
-            transform: rotate(90deg) scale(1.05);
+            transform: rotate(90deg);
         }
 
-        /* Settings Dropdown Box Fixed Above Layout Layers */
         .settings-dropdown {
             position: absolute;
-            top: 60px;
-            right: 20px;
+            top: 50px;
+            right: 0;
             background: var(--bg-tertiary);
             border: 1px solid var(--border-glass);
             border-radius: 14px;
-            width: 220px;
+            width: 180px;
             box-shadow: 0 15px 50px rgba(0, 0, 0, 0.8);
             z-index: 99999;
             padding: 8px;
             opacity: 0;
             visibility: hidden;
-            transform: translateY(-15px) scale(0.95);
+            transform: translateY(-10px) scale(0.95);
             transition: var(--transition-smooth);
-            backdrop-filter: blur(20px);
         }
 
         .settings-dropdown.active {
@@ -187,14 +165,10 @@
         .logout-trigger-btn:hover {
             background: #eb5757;
             color: white;
-            box-shadow: 0 4px 15px rgba(235, 87, 87, 0.4);
-            transform: translateY(-2px);
         }
 
-        /* Ultra Realistic Search Bar Section */
         .search-section {
             padding: 14px 20px;
-            background: transparent;
         }
 
         .search-bar-wrapper {
@@ -205,16 +179,13 @@
             border: 1.5px solid var(--border-glass);
             border-radius: 14px;
             padding: 0 14px;
-            transition: var(--transition-smooth);
             box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
         }
 
         .search-bar-wrapper:focus-within {
             border-color: var(--accent-blue);
-            box-shadow: 0 0 0 3px rgba(47, 165, 114, 0.15), inset 0 2px 6px rgba(0,0,0,0.4);
         }
 
-        /* Permanent Intact At-Symbol Prefix */
         .search-permanent-prefix {
             display: flex;
             align-items: center;
@@ -222,8 +193,6 @@
             color: var(--accent-blue);
             font-weight: 600;
             font-size: 0.9rem;
-            user-select: none;
-            pointer-events: none;
             padding-right: 8px;
             border-right: 1px solid var(--border-glass);
             margin-right: 10px;
@@ -239,12 +208,6 @@
             padding: 11px 0;
         }
 
-        .search-input::placeholder {
-            color: var(--text-muted);
-            font-weight: 400;
-        }
-
-        /* Global Users / Friends Scroll Area */
         .contacts-scroll-area {
             flex: 1;
             overflow-y: auto;
@@ -252,15 +215,6 @@
             max-width: 800px;
             margin: 0 auto;
             width: 100%;
-        }
-
-        .contacts-scroll-area::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        .contacts-scroll-area::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
         }
 
         .section-label {
@@ -272,7 +226,6 @@
             font-weight: 600;
         }
 
-        /* Telegram Style User Card */
         .contact-card {
             display: flex;
             align-items: center;
@@ -284,18 +237,12 @@
             margin-bottom: 6px;
             background: var(--bg-primary);
             border: 1px solid var(--border-glass);
-            position: relative;
         }
 
         .contact-card:hover {
             background: var(--bg-tertiary);
             border-color: rgba(47, 165, 114, 0.4);
             transform: translateX(4px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        }
-
-        .contact-avatar-wrapper {
-            position: relative;
         }
 
         .contact-avatar {
@@ -310,23 +257,18 @@
             font-weight: 600;
             color: var(--accent-blue);
             font-size: 1.2rem;
+            position: relative;
         }
 
-        /* Active Green Circle Status Indicator */
         .status-dot {
             position: absolute;
             bottom: 2px;
             right: 2px;
-            width: 13px;
-            height: 13px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
             border: 2px solid var(--bg-secondary);
             background-color: #27ae60;
-            box-shadow: 0 0 8px rgba(39, 174, 96, 0.6);
-        }
-
-        .contact-info {
-            flex: 1;
         }
 
         .contact-info h4 {
@@ -357,7 +299,6 @@
             color: rgba(255,255,255,0.1);
         }
 
-        /* Logout Confirmation Modal */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -388,12 +329,12 @@
             padding: 30px;
             text-align: center;
             box-shadow: var(--shadow-elevation);
-            transform: scale(0.85) translateY(20px);
+            transform: scale(0.85);
             transition: var(--transition-smooth);
         }
 
         .modal-overlay.active .modal-card {
-            transform: scale(1) translateY(0);
+            transform: scale(1);
         }
 
         .modal-icon {
@@ -419,7 +360,6 @@
             color: var(--text-muted);
             font-size: 0.9rem;
             margin-bottom: 24px;
-            line-height: 1.4;
         }
 
         .modal-actions {
@@ -435,10 +375,6 @@
             font-size: 0.95rem;
             cursor: pointer;
             transition: var(--transition-smooth);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
         }
 
         .btn-stay {
@@ -447,38 +383,10 @@
             color: var(--text-main);
         }
 
-        .btn-stay:hover {
-            background: rgba(255,255,255,0.08);
-            transform: translateY(-2px);
-        }
-
         .btn-confirm-logout {
             background: #eb5757;
             border: none;
             color: white;
-            box-shadow: 0 4px 15px rgba(235, 87, 87, 0.35);
-        }
-
-        .btn-confirm-logout:hover {
-            background: #d44343;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(235, 87, 87, 0.45);
-        }
-
-        /* Spinner Animation */
-        .spinner {
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-top: 2px solid #ffffff;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-            display: inline-block;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -487,7 +395,7 @@
     <div class="app-container">
         <div class="sidebar">
             <div class="sidebar-header">
-                <div class="user-profile-preview" onclick="navigateToProfile()" title="View Profile">
+                <div class="user-profile-preview" onclick="window.location.href='/profile'">
                     <div class="avatar-circle" id="userInitial">U</div>
                     <div class="user-identity">
                         <h3 id="displayUsername">Loading...</h3>
@@ -496,10 +404,9 @@
                 </div>
 
                 <div class="header-actions">
-                    <button class="settings-btn" id="settingsToggleBtn" title="Settings">
+                    <button class="settings-btn" id="settingsToggleBtn">
                         <i class="fa-solid fa-gear"></i>
                     </button>
-
                     <div class="settings-dropdown" id="settingsDropdownMenu">
                         <button class="logout-trigger-btn" id="logoutModalOpenBtn">
                             <i class="fa-solid fa-arrow-right-from-bracket"></i> Log Out
@@ -519,7 +426,11 @@
             </div>
 
             <div class="contacts-scroll-area" id="contactsContainer">
+                <div class="empty-state">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    <span>Loading directory...</span>
                 </div>
+            </div>
         </div>
     </div>
 
@@ -529,21 +440,17 @@
                 <i class="fa-solid fa-triangle-exclamation"></i>
             </div>
             <h3>Terminate Session?</h3>
-            <p>Are you sure you want to log out of your Berryweb account? Yes to continue, No to stay in the site.</p>
+            <p>Are you sure you want to log out of your Berryweb account?</p>
             <div class="modal-actions">
-                <button class="modal-btn btn-stay" id="modalStayBtn">
-                    <span>No</span>
-                </button>
-                <button class="modal-btn btn-confirm-logout" id="modalConfirmLogoutBtn">
-                    <span>Yes, continue</span>
-                </button>
+                <button class="modal-btn btn-stay" id="modalStayBtn">No</button>
+                <button class="modal-btn btn-confirm-logout" id="modalConfirmLogoutBtn">Yes, continue</button>
             </div>
         </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Robust session verification matching all possible keys
+        // Synchronize and verify current active session keys safely
         const currentUser = localStorage.getItem('berry_user') || localStorage.getItem('username') || localStorage.getItem('chat_user');
         
         if (!currentUser) {
@@ -554,35 +461,32 @@
             localStorage.setItem('chat_user', currentUser);
         }
 
-        // Initialize UI Elements safely
         document.getElementById('displayUsername').textContent = currentUser;
         document.getElementById('userInitial').textContent = currentUser.charAt(0).toUpperCase();
 
         const socket = io();
         let allRegisteredUsers = [];
 
-        // Fetch all registered users from database server
+        // Fetch all users instantly on load
         socket.emit('get_all_users');
 
         socket.on('all_users_list', (users) => {
-            // Exclude current user from global directory listing
-            allRegisteredUsers = (users || []).filter(u => u !== currentUser);
+            allRegisteredUsers = (users || []).filter(u => u.toLowerCase() !== currentUser.toLowerCase());
             renderContacts("");
         });
 
         const searchInput = document.getElementById('userSearchInput');
         const contactsContainer = document.getElementById('contactsContainer');
 
-                function renderContacts(query) {
+        function renderContacts(query) {
             const trimmedQuery = query.trim().toLowerCase();
 
-            // When search input is empty, show all registered users directory
             if (trimmedQuery === "") {
                 if (allRegisteredUsers.length === 0) {
                     contactsContainer.innerHTML = `
                         <div class="empty-state">
                             <i class="fa-solid fa-users"></i>
-                            <span>No other registered users found on Berryweb yet.</span>
+                            <span>No other registered users found yet.</span>
                         </div>
                     `;
                 } else {
@@ -590,10 +494,7 @@
                     allRegisteredUsers.forEach(username => {
                         html += `
                             <div class="contact-card" onclick="openChatWith('${username}')">
-                                <div class="contact-avatar-wrapper">
-                                    <div class="contact-avatar">${username.charAt(0).toUpperCase()}</div>
-                                    <div class="status-dot"></div>
-                                </div>
+                                <div class="contact-avatar">${username.charAt(0).toUpperCase()}<div class="status-dot"></div></div>
                                 <div class="contact-info">
                                     <h4>@${username}</h4>
                                     <p>Active now</p>
@@ -606,7 +507,7 @@
                 return;
             }
 
-            // FIXED: Case-insensitive and flexible matching using .includes() so any account can be found easily
+            // Flexible Case-Insensitive Matching
             const matchedUsers = allRegisteredUsers.filter(name => 
                 name.toLowerCase().includes(trimmedQuery)
             );
@@ -625,10 +526,7 @@
             matchedUsers.forEach(username => {
                 html += `
                     <div class="contact-card" onclick="openChatWith('${username}')">
-                        <div class="contact-avatar-wrapper">
-                            <div class="contact-avatar">${username.charAt(0).toUpperCase()}</div>
-                            <div class="status-dot"></div>
-                        </div>
+                        <div class="contact-avatar">${username.charAt(0).toUpperCase()}<div class="status-dot"></div></div>
                         <div class="contact-info">
                             <h4>@${username}</h4>
                             <p>Active now</p>
@@ -639,44 +537,6 @@
             contactsContainer.innerHTML = html;
         }
 
-                }
-                return;
-            }
-
-            // Live global filter across all registered database users
-            const matchedUsers = allRegisteredUsers.filter(name => 
-                name.toLowerCase().startsWith(trimmedQuery)
-            );
-
-            if (matchedUsers.length === 0) {
-                contactsContainer.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fa-solid fa-user-slash"></i>
-                        <span>No user found matching "@${query}"</span>
-                    </div>
-                `;
-                return;
-            }
-
-            let html = `<div class="section-label">Search Results</div>`;
-            matchedUsers.forEach(username => {
-                html += `
-                    <div class="contact-card" onclick="openChatWith('${username}')">
-                        <div class="contact-avatar-wrapper">
-                            <div class="contact-avatar">${username.charAt(0).toUpperCase()}</div>
-                            <div class="status-dot"></div>
-                        </div>
-                        <div class="contact-info">
-                            <h4>@${username}</h4>
-                            <p>Active now</p>
-                        </div>
-                    </div>
-                `;
-            });
-            contactsContainer.innerHTML = html;
-        }
-
-        // Live Search Input Listener
         searchInput.addEventListener('input', (e) => {
             renderContacts(e.target.value);
         });
@@ -686,11 +546,7 @@
             window.location.href = '/chat';
         }
 
-        function navigateToProfile() {
-            window.location.href = '/profile';
-        }
-
-        // Settings Dropdown Menu Slide & Fade Animation Control (Fixed Layering)
+        // Settings Dropdown Toggle
         const settingsToggleBtn = document.getElementById('settingsToggleBtn');
         const settingsDropdownMenu = document.getElementById('settingsDropdownMenu');
 
@@ -700,16 +556,14 @@
         });
 
         window.addEventListener('click', () => {
-            if (settingsDropdownMenu.classList.contains('active')) {
-                settingsDropdownMenu.classList.remove('active');
-            }
+            settingsDropdownMenu.classList.remove('active');
         });
 
         settingsDropdownMenu.addEventListener('click', (e) => {
             e.stopPropagation();
         });
 
-        // Logout Confirmation Modal Logic with Button Loading Animations
+        // Logout Modal Trigger Logic
         const logoutModalOpenBtn = document.getElementById('logoutModalOpenBtn');
         const logoutModalOverlay = document.getElementById('logoutModalOverlay');
         const modalStayBtn = document.getElementById('modalStayBtn');
@@ -721,25 +575,12 @@
         });
 
         modalStayBtn.addEventListener('click', () => {
-            const btnSpan = modalStayBtn.querySelector('span');
-            btnSpan.innerHTML = `<span class="spinner"></span>`;
-            setTimeout(() => {
-                logoutModalOverlay.classList.remove('active');
-                btnSpan.textContent = 'No';
-            }, 300);
+            logoutModalOverlay.classList.remove('active');
         });
 
         modalConfirmLogoutBtn.addEventListener('click', () => {
-            const btnSpan = modalConfirmLogoutBtn.querySelector('span');
-            btnSpan.innerHTML = `<span class="spinner"></span>`;
-            
-            setTimeout(() => {
-                localStorage.removeItem('berry_user');
-                localStorage.removeItem('username');
-                localStorage.removeItem('chat_user');
-                localStorage.removeItem('berry_active_chat');
-                window.location.href = '/login';
-            }, 600);
+            localStorage.clear();
+            window.location.href = '/login';
         });
 
         logoutModalOverlay.addEventListener('click', (e) => {
