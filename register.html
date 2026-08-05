@@ -160,7 +160,85 @@
             Already have an account? <a href="/login">Log in here</a>
         </div>
     </div>
-    <script>
+
+    <div style="position: relative;">
+    <input type="password" id="password" placeholder="Create secure password" required>
+    <span id="togglePassword" style="position: absolute; right: 15px; top: 15px; cursor: pointer; color: #aaa;">👁️</span>
+</div>
+
+<div style="position: relative; margin-top: 10px;">
+    <input type="password" id="confirmPassword" placeholder="Confirm secure password" required>
+    <span id="toggleConfirm" style="position: absolute; right: 15px; top: 15px; cursor: pointer; color: #aaa;">👁️</span>
+</div>
+
+<script>
+// Password Visibility Toggle Functionality
+const togglePassword = document.getElementById('togglePassword');
+const passwordInput = document.getElementById('password');
+const toggleConfirm = document.getElementById('toggleConfirm');
+const confirmInput = document.getElementById('confirmPassword');
+
+togglePassword.addEventListener('click', () => {
+    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordInput.setAttribute('type', type);
+    togglePassword.textContent = type === 'password' ? '👁️' : '👁️‍🗨️';
+});
+
+toggleConfirm.addEventListener('click', () => {
+    const type = confirmInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    confirmInput.setAttribute('type', type);
+    toggleConfirm.textContent = type === 'password' ? '👁️' : '👁️‍🗨️';
+});
+
+// Form Submission & High Security Regex Validation
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('username').value.trim();
+    const password = passwordInput.value;
+    const confirmPassword = confirmInput.value;
+    const errorMsg = document.getElementById('errorMsg');
+    
+    errorMsg.style.display = 'none';
+
+    // Strict security check client-side
+    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!strongPasswordRegex.test(password)) {
+        errorMsg.textContent = 'Password must be 8+ chars with uppercase, lowercase, number & special symbol!';
+        errorMsg.style.display = 'block';
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        errorMsg.textContent = 'Passwords do not match!';
+        errorMsg.style.display = 'block';
+        return;
+    }
+
+    try {
+        const response = await fetch('/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        
+        const data = await response.json();
+
+        if (data.success) {
+            localStorage.setItem('berry_user', username);
+            localStorage.setItem('username', username);
+            // Redirects to policy terms page as requested
+            window.location.href = '/policy';
+        } else {
+            errorMsg.textContent = data.message || 'Registration failed.';
+            errorMsg.style.display = 'block';
+        }
+    } catch (err) {
+        errorMsg.textContent = 'Connection error. Please try again.';
+        errorMsg.style.display = 'block';
+    }
+});
+
+  
 document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('username').value.trim();

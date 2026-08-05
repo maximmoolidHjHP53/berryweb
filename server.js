@@ -9,22 +9,14 @@ const io = new Server(server, {
     cors: { origin: "*" }
 });
 
-// Middleware
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '.')));
 
-// Root Landing Page Route (Fixes the "Cannot GET /" error)
+// Core Routes
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'login.html'));
 });
 
-// Add this with your other page routes in server.js
-app.get('/policy', (req, res) => {
-    res.sendFile(path.join(__dirname, 'policy.html'));
-});
-
-
-// Routes for HTML Pages
 app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname, 'register.html'));
 });
@@ -37,33 +29,37 @@ app.get('/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'dashboard.html'));
 });
 
-// API Endpoint for Registration
+app.get('/policy', (req, res) => {
+    res.sendFile(path.join(__dirname, 'policy.html'));
+});
+
+// Secure Registration Endpoint with Strength Validation
 app.post('/register', (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) {
         return res.status(400).json({ success: false, message: "All fields are required." });
     }
-    // Add your database registration logic here
+
+    // High security regex: Min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
+    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!\%*?&]{8,}$/;
+    if (!strongPasswordRegex.test(password)) {
+        return res.status(400).json({ 
+            success: false, 
+            message: "Password must be 8+ chars and include uppercase, lowercase, number, and special character." 
+        });
+    }
+
+    // Save user to database logic here
     res.status(200).json({ success: true, message: "Registered successfully" });
 });
 
-// API Endpoint for Login
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) {
         return res.status(400).json({ success: false, message: "All fields are required." });
     }
-    // Add your database verification logic here
+    // Verify database login logic here
     res.status(200).json({ success: true, message: "Logged in successfully" });
-});
-
-// Socket.io Connection
-io.on('connection', (socket) => {
-    console.log(`User connected: ${socket.id}`);
-
-    socket.on('disconnect', () => {
-        console.log(`User disconnected: ${socket.id}`);
-    });
 });
 
 const PORT = process.env.PORT || 3000;
