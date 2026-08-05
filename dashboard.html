@@ -340,7 +340,7 @@
             flex-shrink: 0;
         }
 
-        /* High-visibility Facebook-style Red Badge */
+        /* Facebook-Style Bright Red Notification Counter Badge */
         .unread-badge {
             background-color: #ff3b30 !important;
             color: #ffffff !important;
@@ -398,7 +398,7 @@
         <div class="card">
             <div class="card-title">Find Users</div>
             <div class="search-wrapper">
-                <input type="text" id="searchInput" class="search-input" placeholder="Search username..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="secure_search_field_xyz" readonly onfocus="this.removeAttribute('readonly');">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search username..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="secure_search_field_random_v2" readonly onfocus="this.removeAttribute('readonly');">
                 <div id="searchResults" class="search-results"></div>
             </div>
         </div>
@@ -412,17 +412,18 @@
     </div>
 
     <script>
-        // --- Permanent Security & Chrome Storage Persistence ---
+        // --- Permanent Security & Chrome Storage Lock ---
         let currentUsername = localStorage.getItem('berry_session_user') || localStorage.getItem('username') || sessionStorage.getItem('berry_user');
         
         if (!currentUsername) {
             window.location.replace('/login');
         } else {
-            // Lock session permanently across all permanent browser storage vectors so closing Chrome or reloading never wipes it
+            // Lock session permanently into persistent storage so reloading or closing Chrome never drops login
             localStorage.setItem('berry_session_user', currentUsername);
             localStorage.setItem('username', currentUsername);
-            
-            // Intercept phone hardware back button so it redirects or locks you on the dashboard instead of logging out
+            sessionStorage.setItem('berry_user', currentUsername);
+
+            // Intercept phone hardware back button so it keeps user trapped securely on dashboard instead of logging out
             history.pushState(null, null, window.location.href);
             window.addEventListener('popstate', function () {
                 history.pushState(null, null, window.location.href);
@@ -433,11 +434,11 @@
         }
 
         function logout() {
-            localStorage.removeItem('berry_session_user');
-            localStorage.removeItem('username');
+            localStorage.clear();
             sessionStorage.clear();
             window.location.replace('/login');
         }
+
         const searchInput = document.getElementById('searchInput');
         const searchResults = document.getElementById('searchResults');
 
@@ -503,10 +504,9 @@
         async function loadFriends() {
             const friendListEl = document.getElementById('friendList');
             try {
-                // Fetch friends list and unread message counters simultaneously
                 const [friendsRes, unreadRes] = await Promise.all([
                     fetch(`/api/friends?user=${encodeURIComponent(currentUsername)}`),
-                    fetch(`/api/unread-counts?user=${encodeURIComponent(currentUsername)}`)
+                    fetch(`/api/unread-counts?user=${encodeURIComponent(currentUsername)}`).catch(() => ({ json: () => ({ counts: {} }) }))
                 ]);
                 
                 const data = await friendsRes.json();
@@ -522,7 +522,7 @@
                     for (let i = 0; i < data.friends.length; i++) {
                         const friend = data.friends[i];
                         let lastMsgText = "Tap to start chatting";
-                        const unreadCount = unreadCounts[friend.username] || 0;
+                        let unreadCount = unreadCounts[friend.username] || 0;
 
                         try {
                             const msgRes = await fetch(`/api/messages?user=${encodeURIComponent(currentUsername)}&friend=${encodeURIComponent(friend.username)}`);
@@ -536,6 +536,19 @@
                                 } else {
                                     lastMsgText = latest.text;
                                 }
+
+                                // Fallback client-side unread calculation if backend route is missing
+                                const totalFriendMsgs = messages.filter(m => m.sender === friend.username).length;
+                                const storageKey = `berry_read_count_${currentUsername}_${friend.username}`;
+                                let lastReadCount = parseInt(localStorage.getItem(storageKey) || "0");
+                                if (!localStorage.getItem(storageKey)) {
+                                    localStorage.setItem(storageKey, totalFriendMsgs.toString());
+                                    lastReadCount = totalFriendMsgs;
+                                }
+                                const clientCalculatedUnread = Math.max(0, totalFriendMsgs - lastReadCount);
+                                if (clientCalculatedUnread > unreadCount) {
+                                    unreadCount = clientCalculatedUnread;
+                                }
                             }
                         } catch (e) {}
 
@@ -546,8 +559,9 @@
                             existingItem.className = 'friend-item';
                             existingItem.id = `friend-row-${friend.username}`;
                             existingItem.onclick = async () => {
-                                // Clear unread counter on server instantly when chat is clicked
+                                // Clear unread counters instantly when chat is clicked
                                 try {
+                                    localStorage.setItem(`berry_read_count_${currentUsername}_${friend.username}`, '999999');
                                     await fetch('/api/mark-read', {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
