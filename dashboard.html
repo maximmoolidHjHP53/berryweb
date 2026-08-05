@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Berryweb - Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -25,12 +25,6 @@
             color: var(--text-main);
             min-height: 100vh;
             padding: 20px;
-            opacity: 0;
-            animation: fadeIn 0.4s ease-in-out forwards;
-        }
-
-        @keyframes fadeIn {
-            to { opacity: 1; }
         }
 
         .dashboard-container {
@@ -49,7 +43,7 @@
             margin-bottom: 20px;
         }
 
-        .header-card h2 { font-size: 1.3rem; }
+        .header-card h2 { font-size: 1.4rem; }
         .nav-btns { display: flex; gap: 10px; align-items: center; }
 
         .btn {
@@ -92,7 +86,7 @@
             display: none;
         }
 
-        /* Search Bar Section */
+        /* Search Section */
         .search-section {
             margin-bottom: 20px;
         }
@@ -104,7 +98,7 @@
             padding: 14px 18px;
             border-radius: 14px;
             color: var(--text-main);
-            font-size: 0.95ln;
+            font-size: 0.95rem;
             outline: none;
             transition: var(--transition-smooth);
         }
@@ -250,7 +244,7 @@
     </style>
 </head>
 <body>
-  <div class="dashboard-container">
+    <div class="dashboard-container">
         <div class="header-card">
             <h2>Welcome, <span id="displayUsername">User</span></h2>
             <div class="nav-btns">
@@ -263,7 +257,7 @@
         </div>
 
         <div class="search-section">
-            <input type="text" id="searchInput" class="search-bar" placeholder="🔍 Search users to add..." oninput="filterUsers()">
+            <input type="text" id="searchInput" class="search-bar" placeholder="🔍 Search users or friends..." oninput="filterList()">
         </div>
 
         <div class="section-card">
@@ -273,11 +267,9 @@
             </div>
         </div>
 
-        <div class="section-card">
-            <h3><i class="fa-solid fa-user-plus"></i> Discover Users</h3>
-            <div class="list-container" id="allUsersList">
-                <div style="color: var(--text-muted); text-align: center; padding: 10px;">Loading users...</div>
-            </div>
+        <div class="section-card" id="searchResultCard" style="display: none;">
+            <h3><i class="fa-solid fa-magnifying-glass"></i> Search Results</h3>
+            <div class="list-container" id="searchResultList"></div>
         </div>
     </div>
 
@@ -322,7 +314,6 @@
 
         socket.on('all_users_list', (users) => {
             cachedAllUsers = users;
-            filterUsers();
         });
 
         socket.on('refresh_friends_' + currentUser, loadDashboardData);
@@ -366,6 +357,7 @@
 
                 const div = document.createElement('div');
                 div.className = 'list-item';
+                // Direct jump to chat box when clicking friend box
                 div.onclick = () => { window.location.href = `/chat?with=${friend}`; };
                 div.innerHTML = `
                     <div class="user-meta">
@@ -385,27 +377,34 @@
         }
 
         // Live Search Filter Function
-        function filterUsers() {
+        function filterList() {
             const query = document.getElementById('searchInput').value.toLowerCase().trim();
-            const container = document.getElementById('allUsersList');
-            
-            const availableUsers = cachedAllUsers.filter(u => 
-                u !== currentUser && 
-                !cachedFriends.includes(u) && 
-                !cachedRequests.includes(u) &&
-                u.toLowerCase().includes(query)
-            );
+            const searchCard = document.getElementById('searchResultCard');
+            const searchList = document.getElementById('searchResultList');
 
-            if (availableUsers.length === 0) {
-                container.innerHTML = `<div style="color: var(--text-muted); text-align: center; padding: 10px;">No users found.</div>`;
+            if (!query) {
+                searchCard.style.display = 'none';
                 return;
             }
 
-            container.innerHTML = '';
-            availableUsers.forEach(user => {
+            searchCard.style.display = 'block';
+            
+            // Find users who are NOT current user and NOT already friends
+            const results = cachedAllUsers.filter(u => 
+                u !== currentUser && 
+                !cachedFriends.includes(u) && 
+                u.toLowerCase().includes(query)
+            );
+
+            if (results.length === 0) {
+                searchList.innerHTML = `<div style="color: var(--text-muted); text-align: center; padding: 10px;">No users found.</div>`;
+                return;
+            }
+
+            searchList.innerHTML = '';
+            results.forEach(user => {
                 const div = document.createElement('div');
                 div.className = 'list-item';
-                div.onclick = null;
                 div.innerHTML = `
                     <div class="user-meta">
                         <div class="avatar">${user.charAt(0).toUpperCase()}</div>
@@ -417,7 +416,7 @@
                         <button class="btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="sendRequest('${user}')"><i class="fa-solid fa-user-plus"></i> Add</button>
                     </div>
                 `;
-                container.appendChild(div);
+                searchList.appendChild(div);
             });
         }
 
