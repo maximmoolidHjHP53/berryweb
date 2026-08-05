@@ -5,13 +5,16 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+    cors: { origin: "*" },
+    transports: ['websocket', 'polling']
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname)));
 
-// Global robust in-memory database store (persists during runtime across all clients)
+// Global in-memory application store
 let globalUsers = {};
 let onlineUsers = {};
 let messages = [];
@@ -90,7 +93,6 @@ io.on('connection', (socket) => {
             if (bio !== undefined) globalUsers[username].bio = bio;
             if (avatar !== undefined) globalUsers[username].avatar = avatar;
             
-            // Broadcast profile update globally to all connected clients
             io.emit('profile_updated', { username, profile: globalUsers[username] });
             socket.emit('user_data_response', globalUsers[username]);
         }
