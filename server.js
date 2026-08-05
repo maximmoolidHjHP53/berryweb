@@ -13,7 +13,6 @@ const io = new Server(server, {
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '.')));
 
-
 // Path to a persistent storage file (or connect to MongoDB Atlas)
 const DB_FILE = path.join(__dirname, 'users.json');
 
@@ -28,44 +27,39 @@ function getUsers() {
     }
 }
 
-// Helper to save users
-function saveUsers(users) {
-    fs.writeFileSync(DB_FILE, JSON.stringify(users, null, 2));
-}
-
 // Core Routes
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'home.html'));
 });
 
 // Routes
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
 app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
 app.get('/policy', (req, res) => res.sendFile(path.join(__dirname, 'policy.html')));
 
-    // Keep track of registered users in memory (or use a database later)
-const registeredUsers = [];
-
+// Registration Endpoint with Permanent Storage
 app.post('/register', (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) {
         return res.status(400).json({ success: false, message: "All fields are required." });
     }
 
-    // 1. Check if username already exists
-    const existingUser = registeredUsers.find(user => user.username === username);
-    if (existingUser) {
-        return res.status(400).json({ success: false, message: "Username is already taken! Choose another." });
+    const users = getUsers();
+
+    // Check if username already exists
+    if (users.some(user => user.username === username)) {
+        return res.status(400).json({ success: false, message: "Username is already taken!" });
     }
 
-    // High security regex: Min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
-    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!\%*?&]{8,}$/;
+    // High security password validation
+    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!strongPasswordRegex.test(password)) {
         return res.status(400).json({ 
             success: false, 
-            message: "Password must be 8+ chars and include uppercase, lowercase, number, and special character." 
+            message: "Password must be 8+ chars with uppercase, lowercase, number & special symbol." 
         });
     }
 
@@ -73,19 +67,19 @@ app.post('/register', (req, res) => {
     users.push({ username, password });
     saveUsers(users);
 
-    // Save user to database logic here
     res.status(200).json({ success: true, message: "Registered successfully" });
 });
 
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
-    if (!username || !password) {
-        return res.status(400).json({ success: false, message: "All fields are required." });
-    }
-    // Verify database login logic here
-    res.status(200).json({ success: true, message: "Logged in successfully" });
-
+    const users = getUsers();
     
+    const user = users.find(u => u.username === username && u.password === password);
+    if (!user) {
+        return res.status(400).json({ success: false, message: "Invalid username or password." });
+    }
+
+    res.status(200).json({ success: true, message: "Logged in successfully" });
 });
 
 const PORT = process.env.PORT || 3000;
