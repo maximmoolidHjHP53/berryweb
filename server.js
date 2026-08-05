@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
@@ -11,12 +12,42 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname)));
 
-// In-Memory Database
-let users = {}; 
-let messages = []; 
-let onlineUsers = {}; // Tracks socket.id <-> username
+// Persistent JSON Storage File
+const USERS_FILE = path.join(__dirname, 'users.json');
 
-// Express API Routes for Login/Register
+function loadUsers() {
+    try {
+        if (fs.existsSync(USERS_FILE)) {
+            const data = fs.readFileSync(USERS_FILE, 'utf8');
+            return JSON.parse(data);
+        }
+    } catch (e) {
+        console.error('Error loading users.json:', e);
+    }
+    return {};
+}
+
+function saveUsers() {
+    try {
+        fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+    } catch (e) {
+        console.error('Error saving users.json:', e);
+    }
+}
+
+let users = loadUsers();
+let onlineUsers = {};
+let messages = [];
+
+// Routes
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
+app.get('/home', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
+app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
+app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
+app.get('/chat', (req, res) => res.sendFile(path.join(__dirname, 'chat.html')));
+app.get('/profile', (req, res) => res.sendFile(path.join(__dirname, 'profile.html')));
+
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     if (users[username] && users[username].password === password) {
@@ -28,37 +59,23 @@ app.post('/api/login', (req, res) => {
 
 app.post('/api/register', (req, res) => {
     const { username, password } = req.body;
-    if (!username || !password) {
-        return res.json({ success: false, message: 'All fields are required!' });
-    }
-    if (users[username]) {
-        res.json({ success: false, message: 'Username already taken!' });
-    } else {
-        users[username] = {
-            password,
-            friends: [],
-            friendRequests: [],
-            bio: 'Hello! I am using Berryweb.',
-            avatar: '',
-            regDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-            unreadCounts: {} // tracks unread messages per sender
-        };
-        res.json({ success: true });
-    }
+    if (!username || !password) return res.json({ success: false, message: 'All fields required!' });
+    if (users[username]) return res.json({ success: false, message: 'Username taken!' });
+
+    users[username] = {
+        password,
+        friends: [],
+        friendRequests: [],
+        bio: 'Hello! I am using Berryweb.',
+        avatar: '',
+        regDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+        unreadCounts: {}
+    };
+    saveUsers();
+    res.json({ success: true });
 });
 
-// Page Routes
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
-app.get('/home', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
-app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
-app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
-app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
-app.get('/chat', (req, res) => res.sendFile(path.join(__dirname, 'chat.html')));
-app.get('/profile', (req, res) => res.sendFile(path.join(__dirname, 'profile.html')));
-
-// Socket.io Handlers
 io.on('connection', (socket) => {
-    
     socket.on('user_online', (username) => {
         if (username) {
             onlineUsers[socket.id] = username;
@@ -69,11 +86,11 @@ io.on('connection', (socket) => {
     socket.on('register_user', (data) => {
         const { username, password } = data;
         if (!username || !password) {
-            socket.emit('register_error', 'All fields are required!');
+            socket.emit('register_error', 'All fields required!');
             return;
         }
         if (users[username]) {
-            socket.emit('register_error', 'Username already taken!');
+            socket.emit('register_error', 'Username taken!');
         } else {
             users[username] = {
                 password,
@@ -84,6 +101,7 @@ io.on('connection', (socket) => {
                 regDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
                 unreadCounts: {}
             };
+            saveUsers();
             socket.emit('register_success');
         }
     });
@@ -104,6 +122,10 @@ io.on('connection', (socket) => {
     socket.on('get_user_data', (username) => {
         if (users[username]) {
             socket.emit('user_data_response', users[username]);
+        } else {
+            socket.emit('user_data_response', {
+                bio: 'Hello!', avatar: '', regDate: 'August 5, 2026', friends: [], friendRequests: []
+            });
         }
     });
 
@@ -112,6 +134,7 @@ io.on('connection', (socket) => {
         if (users[username]) {
             if (bio !== undefined) users[username].bio = bio;
             if (avatar !== undefined) users[username].avatar = avatar;
+            saveUsers();
             io.emit('profile_updated_' + username, users[username]);
         }
     });
@@ -120,6 +143,7 @@ io.on('connection', (socket) => {
         const { sender, receiver } = data;
         if (users[receiver] && !users[receiver].friendRequests.includes(sender) && !users[receiver].friends.includes(sender)) {
             users[receiver].friendRequests.push(sender);
+            saveUsers();
             io.emit('refresh_requests_' + receiver);
         }
     });
@@ -133,8 +157,10 @@ io.on('connection', (socket) => {
                 if (users[requester] && !users[requester].friends.includes(username)) {
                     users[requester].friends.push(username);
                 }
+                saveUsers();
                 io.emit('refresh_friends_' + requester);
             }
+            saveUsers();
             io.emit('refresh_friends_' + username);
             io.emit('refresh_requests_' + username);
         }
@@ -146,12 +172,12 @@ io.on('connection', (socket) => {
             (m.sender === user1 && m.receiver === user2) || 
             (m.sender === user2 && m.receiver === user1)
         );
-        // Clear unread count for user1 from user2
         if (users[user1] && users[user1].unreadCounts) {
             users[user1].unreadCounts[user2] = 0;
+            saveUsers();
+            io.emit('update_unread_' + user1, users[user1].unreadCounts);
         }
         socket.emit('loaded_messages', conversation);
-        socket.emit('update_unread', users[user1]?.unreadCounts || {});
     });
 
     socket.on('send_message', (data) => {
@@ -159,6 +185,7 @@ io.on('connection', (socket) => {
         if (users[data.receiver]) {
             if (!users[data.receiver].unreadCounts) users[data.receiver].unreadCounts = {};
             users[data.receiver].unreadCounts[data.sender] = (users[data.receiver].unreadCounts[data.sender] || 0) + 1;
+            saveUsers();
             io.emit('update_unread_' + data.receiver, users[data.receiver].unreadCounts);
         }
         io.emit('receive_message', data);
@@ -172,5 +199,5 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`Server running successfully on port ${PORT}`);
+    console.log(`Berryweb running on port ${PORT}`);
 });

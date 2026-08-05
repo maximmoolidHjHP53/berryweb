@@ -12,8 +12,8 @@
         }
         @keyframes fadeInPage { to { opacity: 1; } }
 
-        a, button, .friend-item, .action-btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        a:hover, button:hover { transform: translateY(-2px); }
+        a, button, input { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        button:hover, a:hover { transform: translateY(-1px); }
 
         .dashboard-container { max-width: 650px; margin: 0 auto; }
 
@@ -43,39 +43,52 @@
         }
         .action-btn.logout-btn { background: #ef4444; }
 
-        .friends-card {
+        /* Card Sections */
+        .card-box {
             background: #1e222d; border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
         }
-        .friends-card h3 { font-size: 15px; margin-bottom: 15px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+        .card-box h3 { font-size: 15px; margin-bottom: 15px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        .friend-item {
+        /* Search Bar */
+        .search-input {
+            width: 100%; background: #252a37; border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px; padding: 12px 15px; color: white; font-size: 14px; outline: none; margin-bottom: 12px;
+        }
+        .search-input:focus { border-color: #22c55e; }
+
+        .search-results-list, .friends-list, .requests-list { display: flex; flex-direction: column; gap: 10px; }
+
+        .list-item {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 12px 15px; background: #252a37; border-radius: 12px; margin-bottom: 10px;
+            padding: 12px 15px; background: #252a37; border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.04);
         }
-        .friend-info { display: flex; align-items: center; gap: 12px; }
+        .item-info { display: flex; align-items: center; gap: 12px; }
 
         .status-indicator { width: 11px; height: 11px; border-radius: 50%; display: inline-block; border: 2px solid #252a37; }
         .status-online { background-color: #22c55e; box-shadow: 0 0 8px rgba(34, 197, 94, 0.7); }
         .status-offline { background-color: #64748b; }
 
-        /* Friend Chat Button with Corner Unread Badge */
-        .chat-btn-wrapper { position: relative; display: inline-block; }
-        .chat-icon-btn {
+        /* Buttons & Badges */
+        .btn-primary {
             background: #22c55e; color: white; border: none; padding: 7px 14px;
             border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: bold; text-decoration: none;
-            display: inline-block;
         }
-        .chat-icon-btn:hover { background: #16a34a; }
+        .btn-primary:hover { background: #16a34a; }
+        .btn-danger { background: #ef4444; }
+        .btn-danger:hover { background: #dc2626; }
+        
+        .badge-friend { background: rgba(34, 197, 94, 0.15); color: #22c55e; font-size: 12px; padding: 5px 12px; border-radius: 8px; font-weight: 600; }
 
+        .chat-btn-wrapper { position: relative; display: inline-block; }
         .friend-unread-badge {
             background-color: #ef4444; color: white; font-size: 10px; font-weight: bold;
             padding: 2px 6px; border-radius: 10px; position: absolute; top: -8px; right: -8px;
             box-shadow: 0 2px 5px rgba(239, 68, 68, 0.5);
         }
 
-        /* Logout Confirmation Modal Animation */
+        /* Logout Modal */
         .modal-backdrop {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(5px);
@@ -111,10 +124,23 @@
             </div>
         </div>
 
-        <div class="friends-card">
-            <h3>My Friends</h3>
-            <div id="friendsListContainer">
-                <p style="color: #64748b; font-size: 14px;">Loading friends...</p>
+        <div class="card-box">
+            <h3>Find Users & Add Friends</h3>
+            <input type="text" id="searchInput" class="search-input" autocomplete="off" placeholder="Search users by username..." oninput="handleSearch(this.value)">
+            <div id="searchResultsContainer" style="display: none;">
+                <div class="search-results-list" id="searchResultsList"></div>
+            </div>
+        </div>
+
+        <div class="card-box" id="requestsCardBox" style="display: none;">
+            <h3>Friend Requests</h3>
+            <div class="requests-list" id="requestsListContainer"></div>
+        </div>
+
+        <div class="card-box">
+            <h3>My Friendlist</h3>
+            <div class="friends-list" id="friendsListContainer">
+                <p style="color: #64748b; font-size: 14px;">Loading friendlist...</p>
             </div>
         </div>
     </div>
@@ -141,20 +167,25 @@
         }
 
         const socket = io();
+        let allRegisteredUsers = [];
         let onlineUsersList = [];
-        let unreadDataMap = {};
+        let currentUserData = { friends: [], friendRequests: [], unreadCounts: {} };
 
         socket.emit('user_online', currentUser);
         socket.emit('get_user_data', currentUser);
+        socket.emit('get_all_users');
+
+        socket.on('all_users_list', (users) => {
+            allRegisteredUsers = users.filter(u => u !== currentUser);
+        });
 
         socket.on('user_data_response', (userData) => {
+            currentUserData = userData;
             if (userData.avatar) {
                 document.getElementById('headerAvatarContainer').innerHTML = `<img src="${userData.avatar}" alt="Avatar">`;
             }
-            if (userData.unreadCounts) {
-                unreadDataMap = userData.unreadCounts;
-            }
             renderFriends(userData.friends || []);
+            renderRequests(userData.friendRequests || []);
         });
 
         socket.on('update_online_status', (onlineArr) => {
@@ -163,14 +194,82 @@
         });
 
         socket.on('update_unread_' + currentUser, (unreadCounts) => {
-            unreadDataMap = unreadCounts || {};
+            currentUserData.unreadCounts = unreadCounts || {};
+            renderFriends(currentUserData.friends || []);
+        });
+
+        socket.on('refresh_friends_' + currentUser, () => {
             socket.emit('get_user_data', currentUser);
         });
 
+        socket.on('refresh_requests_' + currentUser, () => {
+            socket.emit('get_user_data', currentUser);
+        });
+
+        // Live Search Handler
+        function handleSearch(query) {
+            const container = document.getElementById('searchResultsContainer');
+            const list = document.getElementById('searchResultsList');
+            const trimmed = query.trim().toLowerCase();
+
+            if (trimmed === '') {
+                container.style.display = 'none';
+                list.innerHTML = '';
+                return;
+            }
+
+            container.style.display = 'block';
+            const matches = allRegisteredUsers.filter(u => u.toLowerCase().includes(trimmed));
+
+            if (matches.length === 0) {
+                list.innerHTML = `<p style="color: #64748b; font-size: 13px; padding: 5px;">No users found.</p>`;
+                return;
+            }
+
+            list.innerHTML = '';
+            matches.forEach(username => {
+                const isFriend = (currentUserData.friends || []).includes(username);
+                const isSelf = username === currentUser;
+
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                
+                let actionHtml = '';
+                if (isSelf) {
+                    actionHtml = `<span style="font-size: 12px; color: #64748b;">(You)</span>`;
+                } else if (isFriend) {
+                    actionHtml = `<span class="badge-friend">Friends</span>`;
+                } else {
+                    actionHtml = `<button class="btn-primary" onclick="sendFriendRequest('${username}')">Add Friend</button>`;
+                }
+
+                item.innerHTML = `
+                    <div class="item-info">
+                        <div class="avatar-container" style="width: 36px; height: 36px; font-size: 14px;">${username.charAt(0).toUpperCase()}</div>
+                        <h4 style="font-size: 14px; font-weight: 600;">${username}</h4>
+                    </div>
+                    <div>${actionHtml}</div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function sendFriendRequest(targetUser) {
+            socket.emit('send_friend_request', { sender: currentUser, receiver: targetUser });
+            alert(`Friend request sent to ${targetUser}!`);
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchResultsContainer').style.display = 'none';
+        }
+
+        function respondRequest(requester, action) {
+            socket.emit('respond_friend_request', { username: currentUser, requester, action });
+        }
+
+        // Render Friendlist Box with Online Indicators & Unread Badges
         function renderFriends(friends) {
             const container = document.getElementById('friendsListContainer');
             if (friends.length === 0) {
-                container.innerHTML = `<p style="color: #64748b; font-size: 14px;">No friends added yet.</p>`;
+                container.innerHTML = `<p style="color: #64748b; font-size: 14px;">No friends added yet. Search users above!</p>`;
                 return;
             }
 
@@ -178,12 +277,12 @@
             friends.forEach(friend => {
                 const isOnline = onlineUsersList.includes(friend);
                 const statusClass = isOnline ? 'status-online' : 'status-offline';
-                const unreadCount = unreadDataMap[friend] || 0;
+                const unreadCount = (currentUserData.unreadCounts || {})[friend] || 0;
 
                 const item = document.createElement('div');
-                item.className = 'friend-item';
+                item.className = 'list-item';
                 item.innerHTML = `
-                    <div class="friend-info">
+                    <div class="item-info">
                         <div style="position: relative;">
                             <div class="avatar-container" style="width: 40px; height: 40px; font-size: 16px;">${friend.charAt(0).toUpperCase()}</div>
                             <span class="status-indicator ${statusClass}" style="position: absolute; bottom: 0; right: 0;"></span>
@@ -194,7 +293,7 @@
                         </div>
                     </div>
                     <div class="chat-btn-wrapper">
-                        <a href="/chat?to=${friend}" class="chat-icon-btn">Chat</a>
+                        <a href="/chat?to=${friend}" class="btn-primary">Chat</a>
                         ${unreadCount > 0 ? `<span class="friend-unread-badge">${unreadCount}</span>` : ''}
                     </div>
                 `;
@@ -202,18 +301,42 @@
             });
         }
 
-        // Logout Modal Confirmation Triggers
+        // Render Incoming Friend Requests Box
+        function renderRequests(requests) {
+            const cardBox = document.getElementById('requestsCardBox');
+            const container = document.getElementById('requestsListContainer');
+
+            if (!requests || requests.length === 0) {
+                cardBox.style.display = 'none';
+                container.innerHTML = '';
+                return;
+            }
+
+            cardBox.style.display = 'block';
+            container.innerHTML = '';
+            requests.forEach(requester => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `
+                    <div class="item-info">
+                        <div class="avatar-container" style="width: 38px; height: 38px; font-size: 15px;">${requester.charAt(0).toUpperCase()}</div>
+                        <h4 style="font-size: 14px; font-weight: 600;">${requester}</h4>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-primary" onclick="respondRequest('${requester}', 'accept')">Accept</button>
+                        <button class="btn-primary btn-danger" onclick="respondRequest('${requester}', 'decline')">Decline</button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Logout Confirmation Modal
         const logoutBtn = document.getElementById('logoutBtn');
         const logoutModal = document.getElementById('logoutModal');
 
-        logoutBtn.addEventListener('click', () => {
-            logoutModal.classList.add('active');
-        });
-
-        document.getElementById('cancelLogout').addEventListener('click', () => {
-            logoutModal.classList.remove('active');
-        });
-
+        logoutBtn.addEventListener('click', () => logoutModal.classList.add('active'));
+        document.getElementById('cancelLogout').addEventListener('click', () => logoutModal.classList.remove('active'));
         document.getElementById('confirmLogout').addEventListener('click', () => {
             localStorage.clear();
             window.location.href = '/login';
