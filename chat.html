@@ -162,28 +162,29 @@
             opacity: 0.8;
         }
 
-        /* Fixed & Visible Typing Indicator Styling */
+        /* Guaranteed Visible Typing Indicator Bar Styles */
         .typing-indicator-row {
-            display: none;
+            display: none; /* Toggled via JS to flex */
             align-items: center;
             gap: 8px;
             padding: 8px 16px;
             font-size: 13px;
             color: var(--accent-green);
-            background-color: var(--bg-color);
+            background-color: var(--card-bg);
             font-style: italic;
             border-top: 1px solid var(--border-color);
+            min-height: 20px;
         }
         
         .typing-dots {
-            display: flex;
+            display: inline-flex;
             gap: 3px;
             align-items: center;
         }
 
         .typing-dots span {
-            height: 6px;
-            width: 6px;
+            height: 5px;
+            width: 5px;
             background-color: var(--accent-green);
             border-radius: 50%;
             display: inline-block;
@@ -194,7 +195,7 @@
         
         @keyframes bounce {
             0%, 60%, 100% { transform: translateY(0); }
-            30% { transform: translateY(-5px); }
+            30% { transform: translateY(-4px); }
         }
 
         .chat-input-bar {
@@ -389,8 +390,6 @@
         // --- Typing Status Handling ---
         function handleTypingInput() {
             const inputVal = document.getElementById('messageInput').value;
-            
-            // If text box is completely emptied, immediately trigger typing false
             const isTyping = inputVal.trim().length > 0;
 
             clearTimeout(typingTimeout);
@@ -408,7 +407,7 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ user: currentUsername, friend: friendUsername, typing: false })
                     });
-                }, 1500);
+                }, 2000);
             }
         }
 
@@ -421,7 +420,7 @@
 
                 if (data.isTyping) {
                     userSpan.textContent = `@${friendUsername}`;
-                    indicator.style.display = 'flex';
+                    indicator.style.display = 'flex'; // Forces block container rendering
                 } else {
                     indicator.style.display = 'none';
                 }
@@ -436,7 +435,6 @@
 
             input.value = '';
             
-            // Stop typing indicator immediately upon sending
             fetch('/api/typing', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -500,11 +498,10 @@
             if (e.key === 'Enter') sendMessage();
         });
 
-        // Fast interval checks for messages and friend's typing state
         setInterval(() => {
             loadMessages();
             checkTypingStatus();
-        }, 1200);
+        }, 1000);
 
         loadMessages();
     </script>
