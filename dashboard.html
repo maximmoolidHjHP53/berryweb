@@ -314,7 +314,6 @@
             flex-shrink: 0;
         }
 
-        /* Facebook-style Red Unread Count Badge */
         .unread-badge {
             background-color: #ff5252;
             color: white;
@@ -368,7 +367,7 @@
         <div class="card">
             <div class="card-title">Find Users</div>
             <div class="search-wrapper">
-                <input type="text" id="searchInput" class="search-input" placeholder="Search username..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="search_user_field_xyz" readonly onfocus="this.removeAttribute('readonly');">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search username..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="random_secure_search_field" readonly onfocus="this.removeAttribute('readonly');">
                 <div id="searchResults" class="search-results"></div>
             </div>
         </div>
@@ -376,7 +375,7 @@
         <div class="card" style="flex: 1; margin-bottom: 16px;">
             <div class="card-title">My Chats</div>
             <ul id="friendList" class="friend-list">
-                <li class="no-friends">Loading chats...</li>
+                <li class="no-friends" id="loadingText">Loading chats...</li>
             </ul>
         </div>
     </div>
@@ -455,15 +454,23 @@
             } catch (err) {}
         }
 
+        let isFirstLoad = true;
+
         async function loadFriends() {
             const friendListEl = document.getElementById('friendList');
             try {
                 const res = await fetch(`/api/friends?user=${encodeURIComponent(currentUsername)}`);
                 const data = await res.json();
 
-                friendListEl.innerHTML = '';
                 if (data.friends && data.friends.length > 0) {
-                    for (const friend of data.friends) {
+                    // Only rebuild list if initial load or list length changed to prevent any blinking/flashing
+                    if (isFirstLoad || friendListEl.children.length !== data.friends.length) {
+                        friendListEl.innerHTML = '';
+                        isFirstLoad = false;
+                    }
+
+                    for (let i = 0; i < data.friends.length; i++) {
+                        const friend = data.friends[i];
                         let lastMsgText = "Tap to start chatting";
                         let unreadCount = 0;
 
@@ -480,15 +487,10 @@
                                     lastMsgText = latest.text;
                                 }
 
-                                // Calculate unread messages (messages sent by friend after user's last read/view or simply incoming count tracking stored locally)
-                                // We track last seen message count in localStorage per friend
                                 const storageKey = `read_count_${currentUsername}_${friend.username}`;
                                 let lastReadCount = parseInt(localStorage.getItem(storageKey) || "0");
-                                
-                                // Count how many messages were sent by the friend total
                                 const totalFriendMsgs = messages.filter(m => m.sender === friend.username).length;
                                 
-                                // If initial setup, initialize read tracker to current count so it starts clean
                                 if (!localStorage.getItem(storageKey)) {
                                     localStorage.setItem(storageKey, totalFriendMsgs.toString());
                                     lastReadCount = totalFriendMsgs;
@@ -498,27 +500,32 @@
                             }
                         } catch (e) {}
 
-                        const li = document.createElement('li');
-                        li.className = 'friend-item';
-                        li.onclick = () => {
-                            // Update read marker when clicking chat
-                            try {
-                                fetch(`/api/messages?user=${encodeURIComponent(currentUsername)}&friend=${encodeURIComponent(friend.username)}`)
-                                    .then(r => r.json())
-                                    .then(d => {
-                                        if (d.messages) {
-                                            const totalFriendMsgs = d.messages.filter(m => m.sender === friend.username).length;
-                                            localStorage.setItem(`read_count_${currentUsername}_${friend.username}`, totalFriendMsgs.toString());
-                                        }
-                                    });
-                            } catch(err){}
-                            window.location.href = `/chat?friend=${encodeURIComponent(friend.username)}`;
-                        };
+                        let existingItem = document.getElementById(`friend-row-${friend.username}`);
+                        
+                        if (!existingItem) {
+                            existingItem = document.createElement('li');
+                            existingItem.className = 'friend-item';
+                            existingItem.id = `friend-row-${friend.username}`;
+                            existingItem.onclick = () => {
+                                try {
+                                    fetch(`/api/messages?user=${encodeURIComponent(currentUsername)}&friend=${encodeURIComponent(friend.username)}`)
+                                        .then(r => r.json())
+                                        .then(d => {
+                                            if (d.messages) {
+                                                const totalFriendMsgs = d.messages.filter(m => m.sender === friend.username).length;
+                                                localStorage.setItem(`read_count_${currentUsername}_${friend.username}`, totalFriendMsgs.toString());
+                                            }
+                                        });
+                                } catch(err){}
+                                window.location.href = `/chat?friend=${encodeURIComponent(friend.username)}`;
+                            };
+                            friendListEl.appendChild(existingItem);
+                        }
                         
                         const unreadClass = unreadCount > 0 ? 'unread' : '';
                         const badgeHtml = unreadCount > 0 ? `<div class="unread-badge">${unreadCount}</div>` : `<div class="message-action">Chat</div>`;
 
-                        li.innerHTML = `
+                        existingItem.innerHTML = `
                             <div class="friend-info">
                                 <div class="friend-avatar">${friend.username.charAt(0)}</div>
                                 <div class="friend-details">
@@ -530,13 +537,14 @@
                                 ${badgeHtml}
                             </div>
                         `;
-                        friendListEl.appendChild(li);
                     }
                 } else {
                     friendListEl.innerHTML = `<li class="no-friends">No active chats. Search above to add friends!</li>`;
                 }
             } catch (err) {
-                friendListEl.innerHTML = `<li class="no-friends">Failed to load chats.</li>`;
+                if (isFirstLoad) {
+                    friendListEl.innerHTML = `<li class="no-friends">Failed to load chats.</li>`;
+                }
             }
         }
 
@@ -564,8 +572,8 @@
         checkInboxCount();
         setInterval(() => {
             loadFriends();
-            checkInboxCount();
-        }, 4000);
+            checkInboxCount()
+          }, 3000);
     </script>
 </body>
 </html>
