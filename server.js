@@ -20,9 +20,11 @@ mongoose.connect(MONGO_URI)
 
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
-    password: { type: String, required: true }
+    password: { type: String, required: true },
+    friends: { type: [String], default: [] } // Added friend list tracking
 });
 const User = mongoose.models.User || mongoose.model('User', userSchema);
+
 
 // Routes
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
@@ -66,6 +68,46 @@ app.post('/login', async (req, res) => {
         res.status(500).json({ success: false, message: "Database login error." });
     }
 });
+
+// Live Search Endpoint
+app.get('/api/search', async (req, res) => {
+    const { q, user } = req.query;
+    try {
+        const users = await User.find({
+            username: { $regex: q, $options: 'i', $ne: user }
+        }).limit(5);
+        res.json(users);
+    } catch (err) {
+        res.status(500).json([]);
+    }
+});
+
+// Add Friend Endpoint
+app.post('/api/add-friend', async (req, res) => {
+    const { username, friendUsername } = req.body;
+    try {
+        const user = await User.findOne({ username });
+        if (user && !user.friends.includes(friendUsername)) {
+            user.friends.push(friendUsername);
+            await user.save();
+        }
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Could not add friend." });
+    }
+});
+
+// Get Friends Endpoint
+app.get('/api/friends', async (req, res) => {
+    const { user } = req.query;
+    try {
+        const dbUser = await User.findOne({ username: user });
+        res.json({ friends: dbUser ? dbUser.friends : [] });
+    } catch (err) {
+        res.status(500).json({ friends: [] });
+    }
+});
+
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
