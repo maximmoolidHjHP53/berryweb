@@ -155,7 +155,10 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    localStorage.setItem('chat_user', username);
+                  localStorage.setItem('berry_user', username);
+localStorage.setItem('username', username);
+localStorage.setItem('chat_user', username);
+
                     window.location.href = '/dashboard';
                 } else {
                     errorSpan.textContent = "❌ " + (data.message || "Invalid login credentials.");
