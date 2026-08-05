@@ -101,7 +101,8 @@
             flex-direction: column;
             gap: 10px;
             background-color: var(--bg-color);
-            min-height: 0; /* Critical for flex scroll container */
+            min-height: 0;
+            scroll-behavior: smooth;
         }
 
         .message {
@@ -138,7 +139,7 @@
             cursor: pointer;
         }
 
-        /* Footer Input Bar - Guaranteed visibility */
+        /* Footer Input Bar */
         .chat-input-bar {
             background-color: var(--card-bg);
             padding: 10px 16px;
@@ -225,7 +226,7 @@
         <form class="chat-input-bar" id="chatForm">
             <input type="file" id="fileInput" accept="image/*">
             <button type="button" class="attach-btn" id="attachBtn" title="Send Photo">🖇️</button>
-            <input type="text" id="messageInput" class="chat-input" placeholder="Type a message..." autocomplete="off" name="chat_message_field">
+            <input type="text" id="messageInput" class="chat-input" placeholder="Type a message..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="random_chat_field_xyz" readonly onfocus="this.removeAttribute('readonly');">
             <button type="submit" class="send-btn">&#10148;</button>
         </form>
     </div>
@@ -254,19 +255,41 @@
             fileInput.click();
         });
 
+        // Instant Photo Compression & Upload Handler (Fixes multi-try failure lag)
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = async function (uploadEvent) {
-                const base64Image = uploadEvent.target.result;
-                await sendDataToServer({
-                    sender: currentUsername,
-                    receiver: friendUsername,
-                    text: '',
-                    image: base64Image
-                });
+            reader.onload = function (uploadEvent) {
+                const img = new Image();
+                img.onload = async function () {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const MAX_WIDTH = 800; // Optimal max width for fast transmission
+
+                    if (width > MAX_WIDTH) {
+                        height = Math.round((height * MAX_WIDTH) / width);
+                        width = MAX_WIDTH;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Convert compressed image to lightweight JPEG Base64 string
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
+
+                    await sendDataToServer({
+                        sender: currentUsername,
+                        receiver: friendUsername,
+                        text: '',
+                        image: compressedBase64
+                    });
+                };
+                img.src = uploadEvent.target.result;
             };
             reader.readAsDataURL(file);
             fileInput.value = '';
@@ -296,12 +319,19 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    loadMessages();
+                    await loadMessages();
+                    scrollToBottom(); // Instant scroll down like Facebook
                 }
             } catch (err) {}
         }
 
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
         let lastMessageCount = 0;
+        let isInitialLoad = true;
+
         async function loadMessages() {
             try {
                 const res = await fetch(`/api/messages?user=${encodeURIComponent(currentUsername)}&friend=${encodeURIComponent(friendUsername)}`);
@@ -319,6 +349,8 @@
                             }
                         }
                     }
+                    
+                    const needsScroll = data.messages.length !== lastMessageCount;
                     lastMessageCount = data.messages.length;
 
                     chatMessages.innerHTML = '';
@@ -337,7 +369,11 @@
                         div.innerHTML = contentHtml;
                         chatMessages.appendChild(div);
                     });
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                    if (isInitialLoad || needsScroll) {
+                        scrollToBottom();
+                        isInitialLoad = false;
+                    }
                 }
             } catch (err) {}
         }
