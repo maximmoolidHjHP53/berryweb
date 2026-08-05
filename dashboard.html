@@ -106,7 +106,6 @@
             border: 2px solid var(--border-color);
         }
 
-        /* Status Dot Animation */
         .status-dot {
             position: absolute;
             bottom: 2px;
@@ -122,20 +121,10 @@
             animation: pulse-green 2s infinite;
         }
 
-        .status-dot.offline {
-            background-color: #757575;
-        }
-
         @keyframes pulse-green {
-            0% {
-                box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.6);
-            }
-            70% {
-                box-shadow: 0 0 0 6px rgba(0, 230, 118, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(0, 230, 118, 0);
-            }
+            0% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.6); }
+            70% { box-shadow: 0 0 0 6px rgba(0, 230, 118, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); }
         }
 
         .user-details h3 {
@@ -354,16 +343,18 @@
             flex-shrink: 0;
         }
 
+        /* Pure Red Facebook-Style Unread Indicator Badge */
         .unread-badge {
-            background-color: #ff5252;
-            color: white;
+            background-color: #ff3b30 !important;
+            color: #ffffff !important;
             font-size: 11px;
-            font-weight: 700;
+            font-weight: 800;
             padding: 2px 7px;
             border-radius: 12px;
-            min-width: 16px;
+            min-width: 18px;
             text-align: center;
-            box-shadow: 0 2px 5px rgba(255, 82, 82, 0.4);
+            box-shadow: 0 2px 6px rgba(255, 59, 48, 0.5);
+            display: inline-block;
         }
 
         .message-action {
@@ -410,7 +401,7 @@
         <div class="card">
             <div class="card-title">Find Users</div>
             <div class="search-wrapper">
-                <input type="text" id="searchInput" class="search-input" placeholder="Search username..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="secure_search_field_x" readonly onfocus="this.removeAttribute('readonly');">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search username..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="secure_search_field_xyz" readonly onfocus="this.removeAttribute('readonly');">
                 <div id="searchResults" class="search-results"></div>
             </div>
         </div>
@@ -424,29 +415,27 @@
     </div>
 
     <script>
-        // Full Session Security: Check both storages to ensure session persists across reloads and back-buttons
+        // --- Full Security & Session Persistence ---
         let currentUsername = localStorage.getItem('username') || localStorage.getItem('berry_user') || sessionStorage.getItem('berry_user');
         
         if (!currentUsername) {
             window.location.replace('/login');
         } else {
-            // Secure persistence across browser instances & navigation
+            // Lock session permanently into all browser stores to prevent re-login loops
             localStorage.setItem('username', currentUsername);
+            localStorage.setItem('berry_user', currentUsername);
             sessionStorage.setItem('berry_user', currentUsername);
             
+            // Push history state to intercept phone hardware/browser back button navigation
+            history.pushState(null, null, window.location.href);
+            window.addEventListener('popstate', function () {
+                // Instantly force back onto the dashboard instead of letting it drop back to login page
+                history.pushState(null, null, window.location.href);
+            });
+
             document.getElementById('usernameDisplay').textContent = currentUsername;
             document.getElementById('userAvatar').textContent = currentUsername.charAt(0).toUpperCase();
         }
-
-        // Prevent accidental back-button login eviction loop
-        window.addEventListener('pageshow', (event) => {
-            if (event.persisted || window.performance && window.performance.navigation.type === 2) {
-                const activeUser = localStorage.getItem('username') || sessionStorage.getItem('berry_user');
-                if (!activeUser) {
-                    window.location.replace('/login');
-                }
-            }
-        });
 
         function logout() {
             localStorage.clear();
@@ -546,8 +535,8 @@
                                     lastMsgText = latest.text;
                                 }
 
-                                // Robust Unread Counter calculation based on incoming messages vs stored viewed markers
-                                const storageKey = `read_count_${currentUsername}_${friend.username}`;
+                                // Robust Unread Counter calculation with guaranteed storage key tracking
+                                const storageKey = `berry_read_count_${currentUsername}_${friend.username}`;
                                 let lastReadCount = parseInt(localStorage.getItem(storageKey) || "0");
                                 const totalFriendMsgs = messages.filter(m => m.sender === friend.username).length;
                                 
@@ -567,14 +556,14 @@
                             existingItem.className = 'friend-item';
                             existingItem.id = `friend-row-${friend.username}`;
                             existingItem.onclick = () => {
-                                // Mark messages as read instantly when clicking friend
+                                // Clear unread counter and update tracking marker when opening chat
                                 try {
                                     fetch(`/api/messages?user=${encodeURIComponent(currentUsername)}&friend=${encodeURIComponent(friend.username)}`)
                                         .then(r => r.json())
                                         .then(d => {
                                             if (d.messages) {
                                                 const totalFriendMsgs = d.messages.filter(m => m.sender === friend.username).length;
-                                                localStorage.setItem(`read_count_${currentUsername}_${friend.username}`, totalFriendMsgs.toString());
+                                                localStorage.setItem(`berry_read_count_${currentUsername}_${friend.username}`, totalFriendMsgs.toString());
                                             }
                                         });
                                 } catch(err){}
@@ -586,15 +575,11 @@
                         const unreadClass = unreadCount > 0 ? 'unread' : '';
                         const badgeHtml = unreadCount > 0 ? `<div class="unread-badge">${unreadCount}</div>` : `<div class="message-action">Chat</div>`;
 
-                        // Mock online status check for friends (green active indicator simulation)
-                        const isOnline = true; 
-                        const statusDotClass = isOnline ? 'online' : 'offline';
-
                         existingItem.innerHTML = `
                             <div class="friend-info">
                                 <div class="friend-avatar-wrapper">
                                     <div class="friend-avatar">${friend.username.charAt(0)}</div>
-                                    <div class="status-dot ${statusDotClass}"></div>
+                                    <div class="status-dot online"></div>
                                 </div>
                                 <div class="friend-details">
                                     <div class="friend-name ${unreadClass}">@${friend.username}</div>
