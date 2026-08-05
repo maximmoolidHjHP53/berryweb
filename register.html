@@ -3,259 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram - Secure Registration</title>
-        <div id="loader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.9); display: none; justify-content: center; align-items: center; z-index: 999; flex-direction: column; gap: 15px; color: #38bdf8; font-weight: 600;">
-        <div style="width: 45px; height: 45px; border: 4px solid #334155; border-top: 4px solid #38bdf8; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-        <span>Creating Secure Account...</span>
-    </div>
+    <title>Berryweb - Register</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        body { opacity: 0; animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes fadeIn { to { opacity: 1; } }
-    </style>
+        :root {
+            --bg-primary: #0e1621;
+            --bg-secondary: #17212b;
+            --accent-green: #2fa572;
+            --accent-green-hover: #23855a;
+            --text-main: #f5f5f5;
+            --text-muted: #8a96a3;
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
 
-  
-    <style>
-        * { box-sizing: border-box; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background: #0f172a; 
-            color: #f8fafc; 
-            margin: 0; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            padding: 20px;
-        }
-        .card { 
-            background: #1e293b; 
-            padding: 30px; 
-            border-radius: 20px; 
-            width: 100%; 
-            max-width: 400px; 
-            border: 1px solid #334155; 
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
-            animation: fadeInSlide 0.5s ease-out forwards;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 25px 35px -5px rgba(56, 189, 248, 0.15);
-        }
-        @keyframes fadeInSlide {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .logo-area { text-align: center; margin-bottom: 24px; }
-        .logo-area h2 { margin: 0; color: #38bdf8; font-size: 1.6rem; font-weight: 700; }
-        .logo-area p { color: #94a3b8; font-size: 0.85rem; margin-top: 6px; }
-
-        .input-group { margin-bottom: 16px; position: relative; }
-        label { display: block; font-size: 0.8rem; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-        
-        .input-wrapper { position: relative; display: flex; align-items: center; }
-        input { 
-            width: 100%; 
-            background: #0f172a; 
-            border: 1px solid #334155; 
-            padding: 12px 14px; 
-            border-radius: 10px; 
-            color: #fff; 
-            outline: none; 
-            font-size: 0.95rem; 
-            transition: border-color 0.2s;
-        }
-        input:focus { border-color: #38bdf8; }
-        
-        .eye-btn { 
-            position: absolute; 
-            right: 12px; 
-            background: transparent; 
-            border: none; 
-            color: #94a3b8; 
-            cursor: pointer; 
-            font-size: 0.9rem; 
-            padding: 4px;
-        }
-        .eye-btn:hover { color: #fff; }
-
-        .helper-text { font-size: 0.75rem; color: #64748b; margin-top: 5px; display: block; line-height: 1.3; }
-        .helper-text.error { color: #f43f5e; }
-        .helper-text.success { color: #10b981; }
-
-        .submit-btn { 
-            width: 100%; 
-            background: #2563eb; 
-            color: #fff; 
-            border: none; 
-            padding: 14px; 
-            border-radius: 10px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            font-size: 1rem; 
-            margin-top: 10px;
-            transition: background 0.2s, transform 0.1s;
-        }
-        .submit-btn:hover { background: #1d4ed8; }
-        .submit-btn:active { transform: scale(0.98); }
-        .submit-btn:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
-
-        .footer-link { text-align: center; margin-top: 20px; font-size: 0.85rem; color: #94a3b8; }
-        .footer-link a { color: #38bdf8; text-decoration: none; font-weight: 600; transition: color 0.2s; }
-        .footer-link a:hover { text-decoration: underline; color: #7dd3fc; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-primary); color: var(--text-main); height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .auth-card { background: var(--bg-secondary); border: 1px solid var(--border-glass); padding: 35px; border-radius: 20px; width: 100%; max-width: 400px; box-shadow: 0 12px 40px rgba(0,0,0,0.6); }
+        .auth-card h2 { font-size: 1.6rem; margin-bottom: 24px; text-align: center; }
+        .input-group { margin-bottom: 16px; }
+        .input-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; }
+        .input-group input { width: 100%; background: var(--bg-primary); border: 1.5px solid var(--border-glass); border-radius: 12px; padding: 12px; color: var(--text-main); font-size: 0.95rem; outline: none; transition: var(--transition-smooth); }
+        .input-group input:focus { border-color: var(--accent-green); }
+        .auth-btn { width: 100%; background: var(--accent-green); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: var(--transition-smooth); margin-top: 10px; }
+        .auth-btn:hover { background: var(--accent-green-hover); transform: translateY(-1px); }
+        .auth-footer { text-align: center; margin-top: 20px; font-size: 0.9rem; color: var(--text-muted); }
+        .auth-footer a { color: var(--accent-green); text-decoration: none; font-weight: 600; }
+        .auth-footer a:hover { text-decoration: underline; }
+        .error-msg { color: #eb5757; font-size: 0.85rem; text-align: center; margin-bottom: 12px; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <div class="logo-area">
-            <h2>Create Account</h2>
-            <p>Secure, encrypted registration portal</p>
-        </div>
 
-        <div class="input-group">
-            <label>Username</label>
-            <input type="text" id="username" placeholder="Letters & numbers only (no spaces)" autocomplete="off" oninput="validateUsername()">
-            <span id="username-helper" class="helper-text">4-20 chars. No spaces, symbols, or underscores.</span>
-        </div>
-
-        <div class="input-group">
-            <label>Password</label>
-            <div class="input-wrapper">
-                <input type="password" id="password" placeholder="At least 8 characters" oninput="validatePassword()">
-                <button type="button" class="eye-btn" onclick="togglePass('password', this)">👁️</button>
+    <div class="auth-card">
+        <h2>Create Account</h2>
+        <div id="errorMsg" class="error-msg"></div>
+        <form id="registerForm">
+            <div class="input-group">
+                <label>Choose Username</label>
+                <input type="text" id="username" required placeholder="Enter username">
             </div>
-            <span id="password-helper" class="helper-text">Min 8 chars, letters and numbers only (no spaces/symbols).</span>
-        </div>
-
-        <div class="input-group">
-            <label>Confirm Password</label>
-            <div class="input-wrapper">
-                <input type="password" id="confirm-password" placeholder="Re-type password" oninput="validateConfirmPassword()">
-                <button type="button" class="eye-btn" onclick="togglePass('confirm-password', this)">👁️</button>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="password" required placeholder="Enter password">
             </div>
-            <span id="confirm-helper" class="helper-text">Must match your password exactly.</span>
-        </div>
-
-        <button type="button" id="submit-btn" class="submit-btn" onclick="submitRegister()" disabled>Complete Registration</button>
-
-        <div class="footer-link">
-            Already have an account? <a href="/login">Log In</a>
+            <button type="submit" class="auth-btn">Register</button>
+        </form>
+        <div class="auth-footer">
+            Already have an account? <a href="/login">Log in here</a>
         </div>
     </div>
 
     <script>
-        const usernameRegex = /^[a-zA-Z0-9]{4,20}$/;
-        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
 
-        let isUserValid = false;
-        let isPassValid = false;
-        let isMatchValid = false;
+        try {
+            const response = await fetch('/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await response.json();
 
-        function togglePass(fieldId, btn) {
-            const input = document.getElementById(fieldId);
-            if (input.type === 'password') {
-                input.type = 'text';
-                btn.textContent = '🙈';
+            if (data.success) {
+                localStorage.setItem('berry_user', username);
+                localStorage.setItem('username', username);
+                window.location.href = '/dashboard';
             } else {
-                input.type = 'password';
-                btn.textContent = '👁️';
+                alert(data.message || 'Registration failed.');
             }
+        } catch (err) {
+            alert('Connection error. Please try again.');
         }
+    });
+</script>
 
-        function validateUsername() {
-            const val = document.getElementById('username').value;
-            const helper = document.getElementById('username-helper');
-            if (val === "") {
-                helper.textContent = "4-20 chars. No spaces, symbols, or underscores.";
-                helper.className = "helper-text";
-                isUserValid = false;
-            } else if (!usernameRegex.test(val)) {
-                helper.textContent = "❌ Invalid! Letters and numbers only (no spaces/symbols).";
-                helper.className = "helper-text error";
-                isUserValid = false;
-            } else {
-                helper.textContent = "✔ Username format is valid.";
-                helper.className = "helper-text success";
-                isUserValid = true;
-            }
-            checkFormState();
-        }
-
-        function validatePassword() {
-            const val = document.getElementById('password').value;
-            const helper = document.getElementById('password-helper');
-            if (val === "") {
-                helper.textContent = "Min 8 chars, letters and numbers only (no spaces/symbols).";
-                helper.className = "helper-text";
-                isPassValid = false;
-            } else if (!passwordRegex.test(val)) {
-                helper.textContent = "❌ Must be 8+ chars with letters & numbers. NO spaces or symbols.";
-                helper.className = "helper-text error";
-                isPassValid = false;
-            } else {
-                helper.textContent = "✔ Strong password format.";
-                helper.className = "helper-text success";
-                isPassValid = true;
-            }
-            validateConfirmPassword();
-            checkFormState();
-        }
-
-        function validateConfirmPassword() {
-            const pass = document.getElementById('password').value;
-            const confirm = document.getElementById('confirm-password').value;
-            const helper = document.getElementById('confirm-helper');
-            if (confirm === "") {
-                helper.textContent = "Must match your password exactly.";
-                helper.className = "helper-text";
-                isMatchValid = false;
-            } else if (pass !== confirm) {
-                helper.textContent = "❌ Passwords do not match!";
-                helper.className = "helper-text error";
-                isMatchValid = false;
-            } else {
-                helper.textContent = "✔ Passwords match perfectly.";
-                helper.className = "helper-text success";
-                isMatchValid = true;
-            }
-            checkFormState();
-        }
-
-        function checkFormState() {
-            const btn = document.getElementById('submit-btn');
-            btn.disabled = !(isUserValid && isPassValid && isMatchValid);
-        }
-
-         async function submitRegister() {
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value.trim();
-            
-            document.getElementById('loader').style.display = 'flex';
-
-            try {
-                const res = await fetch('/api/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-                const data = await res.json();
-                
-                setTimeout(() => {
-                    if (data.success) {
-                        localStorage.setItem('chat_user', username);
-                        window.location.href = '/policy'; // New users go to policy gate
-                    } else {
-                        alert(data.message);
-                        document.getElementById('loader').style.display = 'none';
-                    }
-                }, 700);
-            } catch (err) {
-                alert("Network connection error to server.");
-                document.getElementById('loader').style.display = 'none';
-            }
-        }
-
-    </script>
 </body>
 </html>
