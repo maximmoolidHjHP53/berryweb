@@ -178,7 +178,6 @@
             border-color: var(--accent-green);
         }
 
-        /* LIVE SEARCH RESULTS DROPDOWN */
         .search-results {
             position: absolute;
             top: 100%;
@@ -190,7 +189,7 @@
             margin-top: 6px;
             max-height: 180px;
             overflow-y: auto;
-            display: none; /* Hidden by default */
+            display: none;
             z-index: 50;
             box-shadow: 0 10px 30px rgba(0,0,0,0.6);
         }
@@ -239,7 +238,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 4px;
+            padding: 12px 4px;
             border-bottom: 1px solid var(--border-color);
             cursor: pointer;
             transition: background 0.15s;
@@ -257,37 +256,52 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            flex: 1;
+            min-width: 0;
         }
 
         .friend-avatar {
-            width: 38px;
-            height: 38px;
+            width: 42px;
+            height: 42px;
             background-color: #1e1e1e;
             color: var(--accent-green);
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
             text-transform: uppercase;
+            flex-shrink: 0;
+        }
+
+        .friend-details {
+            flex: 1;
+            min-width: 0;
         }
 
         .friend-name {
             font-size: 14px;
             font-weight: 600;
-            margin-bottom: 2px;
+            margin-bottom: 3px;
         }
 
-        .friend-status {
-            font-size: 11px;
-            color: var(--accent-green);
+        /* Last Message Indicator Style */
+        .friend-last-msg {
+            font-size: 12px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
         }
 
         .message-action {
             font-size: 12px;
             color: var(--accent-green);
             font-weight: 600;
+            padding-left: 8px;
+            flex-shrink: 0;
         }
 
         .no-friends {
@@ -325,7 +339,7 @@
         <div class="card">
             <div class="card-title">Find Users</div>
             <div class="search-wrapper">
-                <input type="text" id="searchInput" class="search-input" placeholder="Search username..." autocomplete="new-password" name="no-autocomplete-search" readonly onfocus="this.removeAttribute('readonly');">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search username..." autocomplete="off" autocapitalize="off" spellcheck="false" name="search_user_field" readonly onfocus="this.removeAttribute('readonly');">
                 <div id="searchResults" class="search-results"></div>
             </div>
         </div>
@@ -358,7 +372,6 @@
         searchInput.addEventListener('input', async (e) => {
             const query = e.target.value.trim();
 
-            // STRICT FIX: If search box is empty, completely hide dropdown
             if (query.length === 0) {
                 searchResults.style.display = 'none';
                 searchResults.innerHTML = '';
@@ -421,7 +434,22 @@
 
                 friendListEl.innerHTML = '';
                 if (data.friends && data.friends.length > 0) {
-                    data.friends.forEach(friend => {
+                    for (const friend of data.friends) {
+                        // Fetch the latest message preview for each friend
+                        let lastMsgText = "Tap to start chatting";
+                        try {
+                            const msgRes = await fetch(`/api/messages?user=${encodeURIComponent(currentUsername)}&friend=${encodeURIComponent(friend.username)}`);
+                            const msgData = await msgRes.json();
+                            if (msgData.messages && msgData.messages.length > 0) {
+                                const latest = msgData.messages[msgData.messages.length - 1];
+                                if (latest.image && !latest.text) {
+                                    lastMsgText = "📷 Sent a photo";
+                                } else {
+                                    lastMsgText = latest.text;
+                                }
+                            }
+                        } catch (e) {}
+
                         const li = document.createElement('li');
                         li.className = 'friend-item';
                         li.onclick = () => window.location.href = `/chat?friend=${encodeURIComponent(friend.username)}`;
@@ -429,21 +457,27 @@
                         li.innerHTML = `
                             <div class="friend-info">
                                 <div class="friend-avatar">${friend.username.charAt(0)}</div>
-                                <div>
+                                <div class="friend-details">
                                     <div class="friend-name">@${friend.username}</div>
-                                    <div class="friend-status">Online</div>
+                                    <span class="friend-last-msg">${escapeHtml(lastMsgText)}</span>
                                 </div>
                             </div>
                             <div class="message-action">Chat</div>
                         `;
                         friendListEl.appendChild(li);
-                    });
+                    }
                 } else {
                     friendListEl.innerHTML = `<li class="no-friends">No active chats. Search above to add friends!</li>`;
                 }
             } catch (err) {
                 friendListEl.innerHTML = `<li class="no-friends">Failed to load chats.</li>`;
             }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
         }
 
         async function checkInboxCount() {
