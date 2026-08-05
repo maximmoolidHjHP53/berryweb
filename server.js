@@ -141,6 +141,43 @@ app.post('/api/respond-request', async (req, res) => {
     }
 });
 
+
+// Add this route in your server.js file
+app.get('/api/unread-counts', (req, res) => {
+    const { user } = req.query;
+    if (!user) return res.json({ counts: {} });
+
+    // Read your database file (adjust variable names based on your existing setup)
+    const db = readDatabase(); 
+    const counts = {};
+
+    if (db.messages) {
+        db.messages.forEach(msg => {
+            // Count messages where the current user is the receiver and they are unread
+            if (msg.receiver === user && !msg.read) {
+                counts[msg.sender] = (counts[msg.sender] || 0) + 1;
+            }
+        });
+    }
+    res.json({ counts });
+});
+
+// Mark messages as read when opening a chat
+app.post('/api/mark-read', (req, res) => {
+    const { user, friend } = req.body;
+    const db = readDatabase();
+    if (db.messages) {
+        db.messages.forEach(msg => {
+            if (msg.receiver === user && msg.sender === friend) {
+                msg.read = true;
+            }
+        });
+        writeDatabase(db);
+    }
+    res.json({ success: true });
+});
+
+
 app.get('/api/inbox-count', async (req, res) => {
     const { user } = req.query;
     try {

@@ -114,9 +114,6 @@
             height: 12px;
             border-radius: 50%;
             border: 2px solid var(--card-bg);
-        }
-
-        .status-dot.online {
             background-color: #00e676;
             animation: pulse-green 2s infinite;
         }
@@ -165,7 +162,7 @@
             position: absolute;
             top: -5px;
             right: -5px;
-            background-color: #ff5252;
+            background-color: #ff3b30;
             color: white;
             font-size: 10px;
             padding: 2px 6px;
@@ -343,17 +340,17 @@
             flex-shrink: 0;
         }
 
-        /* Pure Red Facebook-Style Unread Indicator Badge */
+        /* High-visibility Facebook-style Red Badge */
         .unread-badge {
             background-color: #ff3b30 !important;
             color: #ffffff !important;
             font-size: 11px;
             font-weight: 800;
-            padding: 2px 7px;
+            padding: 2px 8px;
             border-radius: 12px;
             min-width: 18px;
             text-align: center;
-            box-shadow: 0 2px 6px rgba(255, 59, 48, 0.5);
+            box-shadow: 0 2px 6px rgba(255, 59, 48, 0.6);
             display: inline-block;
         }
 
@@ -382,7 +379,7 @@
             <div class="profile-left">
                 <div class="avatar-container">
                     <div class="avatar" id="userAvatar">U</div>
-                    <div class="status-dot online"></div>
+                    <div class="status-dot"></div>
                 </div>
                 <div class="user-details">
                     <h3 id="usernameDisplay">User</h3>
@@ -415,21 +412,19 @@
     </div>
 
     <script>
-        // --- Full Security & Session Persistence ---
-        let currentUsername = localStorage.getItem('username') || localStorage.getItem('berry_user') || sessionStorage.getItem('berry_user');
+        // --- Permanent Security & Chrome Storage Persistence ---
+        let currentUsername = localStorage.getItem('berry_session_user') || localStorage.getItem('username') || sessionStorage.getItem('berry_user');
         
         if (!currentUsername) {
             window.location.replace('/login');
         } else {
-            // Lock session permanently into all browser stores to prevent re-login loops
+            // Lock session permanently across all permanent browser storage vectors so closing Chrome or reloading never wipes it
+            localStorage.setItem('berry_session_user', currentUsername);
             localStorage.setItem('username', currentUsername);
-            localStorage.setItem('berry_user', currentUsername);
-            sessionStorage.setItem('berry_user', currentUsername);
             
-            // Push history state to intercept phone hardware/browser back button navigation
+            // Intercept phone hardware back button so it redirects or locks you on the dashboard instead of logging out
             history.pushState(null, null, window.location.href);
             window.addEventListener('popstate', function () {
-                // Instantly force back onto the dashboard instead of letting it drop back to login page
                 history.pushState(null, null, window.location.href);
             });
 
@@ -438,11 +433,11 @@
         }
 
         function logout() {
-            localStorage.clear();
+            localStorage.removeItem('berry_session_user');
+            localStorage.removeItem('username');
             sessionStorage.clear();
             window.location.replace('/login');
         }
-
         const searchInput = document.getElementById('searchInput');
         const searchResults = document.getElementById('searchResults');
 
@@ -508,8 +503,15 @@
         async function loadFriends() {
             const friendListEl = document.getElementById('friendList');
             try {
-                const res = await fetch(`/api/friends?user=${encodeURIComponent(currentUsername)}`);
-                const data = await res.json();
+                // Fetch friends list and unread message counters simultaneously
+                const [friendsRes, unreadRes] = await Promise.all([
+                    fetch(`/api/friends?user=${encodeURIComponent(currentUsername)}`),
+                    fetch(`/api/unread-counts?user=${encodeURIComponent(currentUsername)}`)
+                ]);
+                
+                const data = await friendsRes.json();
+                const unreadData = await unreadRes.json();
+                const unreadCounts = unreadData.counts || {};
 
                 if (data.friends && data.friends.length > 0) {
                     if (isFirstLoad || friendListEl.children.length !== data.friends.length) {
@@ -520,7 +522,7 @@
                     for (let i = 0; i < data.friends.length; i++) {
                         const friend = data.friends[i];
                         let lastMsgText = "Tap to start chatting";
-                        let unreadCount = 0;
+                        const unreadCount = unreadCounts[friend.username] || 0;
 
                         try {
                             const msgRes = await fetch(`/api/messages?user=${encodeURIComponent(currentUsername)}&friend=${encodeURIComponent(friend.username)}`);
@@ -534,18 +536,6 @@
                                 } else {
                                     lastMsgText = latest.text;
                                 }
-
-                                // Robust Unread Counter calculation with guaranteed storage key tracking
-                                const storageKey = `berry_read_count_${currentUsername}_${friend.username}`;
-                                let lastReadCount = parseInt(localStorage.getItem(storageKey) || "0");
-                                const totalFriendMsgs = messages.filter(m => m.sender === friend.username).length;
-                                
-                                if (!localStorage.getItem(storageKey)) {
-                                    localStorage.setItem(storageKey, totalFriendMsgs.toString());
-                                    lastReadCount = totalFriendMsgs;
-                                }
-
-                                unreadCount = Math.max(0, totalFriendMsgs - lastReadCount);
                             }
                         } catch (e) {}
 
@@ -555,17 +545,14 @@
                             existingItem = document.createElement('li');
                             existingItem.className = 'friend-item';
                             existingItem.id = `friend-row-${friend.username}`;
-                            existingItem.onclick = () => {
-                                // Clear unread counter and update tracking marker when opening chat
+                            existingItem.onclick = async () => {
+                                // Clear unread counter on server instantly when chat is clicked
                                 try {
-                                    fetch(`/api/messages?user=${encodeURIComponent(currentUsername)}&friend=${encodeURIComponent(friend.username)}`)
-                                        .then(r => r.json())
-                                        .then(d => {
-                                            if (d.messages) {
-                                                const totalFriendMsgs = d.messages.filter(m => m.sender === friend.username).length;
-                                                localStorage.setItem(`berry_read_count_${currentUsername}_${friend.username}`, totalFriendMsgs.toString());
-                                            }
-                                        });
+                                    await fetch('/api/mark-read', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ user: currentUsername, friend: friend.username })
+                                    });
                                 } catch(err){}
                                 window.location.href = `/chat?friend=${encodeURIComponent(friend.username)}`;
                             };
@@ -579,7 +566,7 @@
                             <div class="friend-info">
                                 <div class="friend-avatar-wrapper">
                                     <div class="friend-avatar">${friend.username.charAt(0)}</div>
-                                    <div class="status-dot online"></div>
+                                    <div class="status-dot"></div>
                                 </div>
                                 <div class="friend-details">
                                     <div class="friend-name ${unreadClass}">@${friend.username}</div>
