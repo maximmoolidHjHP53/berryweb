@@ -17,14 +17,23 @@ app.use(express.static(path.join(__dirname)));
 const mongoUri = process.env.MONGO_URI || process.env.DATABASE_URL || "mongodb+srv://maximoolid123:maximoolid123@cluster0.b737s.mongodb.net/?retryWrites=true&w=majority";
 let db;
 
-MongoClient.connect(mongoUri, { useUnifiedTopology: true })
-    .then(client => {
+// Robust Database Connection with Retry Safety
+async function connectDB() {
+    try {
+        const client = new MongoClient(mongoUri, { 
+            useUnifiedTopology: true,
+            connectTimeoutMS: 10000,
+            socketTimeoutMS: 45000 
+        });
+        await client.connect();
         db = client.db('berryweb');
         console.log("Connected successfully to MongoDB Atlas database.");
-    })
-    .catch(err => {
-        console.error("Database connection failure:", err);
-    });
+    } catch (err) {
+        console.error("Database connection warning/error (retrying in 5s):", err.message);
+        setTimeout(connectDB, 5000);
+    }
+}
+connectDB();
 
 // Page Route Endpoints
 app.get('/', (req, res) => {
@@ -55,9 +64,10 @@ app.get('/profile', (req, res) => {
     res.sendFile(path.join(__dirname, 'profile.html'));
 });
 
-// Authentication APIs
+// Authentication APIs with Null-Database Protection
 app.post('/api/login', async (req, res) => {
     try {
+        if (!db) return res.json({ success: false, message: "Database still connecting. Please try again in a moment." });
         const { username, password } = req.body;
         const usersCollection = db.collection('users');
         const user = await usersCollection.findOne({ username, password });
@@ -73,6 +83,7 @@ app.post('/api/login', async (req, res) => {
 
 app.post('/api/register', async (req, res) => {
     try {
+        if (!db) return res.json({ success: false, message: "Database still connecting. Please try again in a moment." });
         const { username, password } = req.body;
         const usersCollection = db.collection('users');
         const existing = await usersCollection.findOne({ username });
@@ -96,6 +107,7 @@ app.post('/api/register', async (req, res) => {
 io.on('connection', (socket) => {
     socket.on('get_all_users', async () => {
         try {
+            if (!db) return socket.emit('all_users_list', []);
             const usersCollection = db.collection('users');
             const usersList = await usersCollection.find({}).toArray();
             const usernames = usersList.map(u => u.username || u.user).filter(Boolean);
@@ -107,6 +119,7 @@ io.on('connection', (socket) => {
 
     socket.on('get_user_data', async (username) => {
         try {
+            if (!db) return socket.emit('user_data_response', { friends: [], friendRequests: [] });
             const usersCollection = db.collection('users');
             const user = await usersCollection.findOne({ username });
             if (user) {
@@ -122,6 +135,7 @@ io.on('connection', (socket) => {
 
     socket.on('send_friend_request', async ({ sender, receiver }) => {
         try {
+            if (!db) return;
             const usersCollection = db.collection('users');
             const targetUser = await usersCollection.findOne({ username: receiver });
             if (!targetUser) return;
@@ -141,6 +155,7 @@ io.on('connection', (socket) => {
 
     socket.on('respond_friend_request', async ({ username, requester, action }) => {
         try {
+            if (!db) return;
             const usersCollection = db.collection('users');
             const userDoc = await usersCollection.findOne({ username });
             const requesterDoc = await usersCollection.findOne({ username: requester });
@@ -175,6 +190,7 @@ io.on('connection', (socket) => {
 
     socket.on('send_message', async (data) => {
         try {
+            if (!db) return;
             const messagesCollection = db.collection('messages');
             await messagesCollection.insertOne(data);
             io.emit('receive_message', data);
@@ -185,6 +201,7 @@ io.on('connection', (socket) => {
 
     socket.on('get_messages', async ({ user1, user2 }) => {
         try {
+            if (!db) return socket.emit('loaded_messages', []);
             const messagesCollection = db.collection('messages');
             const msgs = await messagesCollection.find({
                 $or: [
