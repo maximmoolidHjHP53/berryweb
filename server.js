@@ -14,8 +14,9 @@ app.use(express.static(path.join(__dirname)));
 // In-Memory Database
 let users = {}; 
 let messages = []; 
+let onlineUsers = {}; // Tracks socket.id <-> username
 
-// === INSERT THESE API ROUTES HERE ===
+// Express API Routes for Login/Register
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     if (users[username] && users[username].password === password) {
@@ -39,15 +40,14 @@ app.post('/api/register', (req, res) => {
             friendRequests: [],
             bio: 'Hello! I am using Berryweb.',
             avatar: '',
-            regDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+            regDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+            unreadCounts: {} // tracks unread messages per sender
         };
         res.json({ success: true });
     }
 });
-// ====================================
 
-
-// Page Routes (Landing page is home.html)
+// Page Routes
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
 app.get('/home', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
@@ -59,6 +59,13 @@ app.get('/profile', (req, res) => res.sendFile(path.join(__dirname, 'profile.htm
 // Socket.io Handlers
 io.on('connection', (socket) => {
     
+    socket.on('user_online', (username) => {
+        if (username) {
+            onlineUsers[socket.id] = username;
+            io.emit('update_online_status', Object.values(onlineUsers));
+        }
+    });
+
     socket.on('register_user', (data) => {
         const { username, password } = data;
         if (!username || !password) {
@@ -74,7 +81,8 @@ io.on('connection', (socket) => {
                 friendRequests: [],
                 bio: 'Hello! I am using Berryweb.',
                 avatar: '',
-                regDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+                regDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+                unreadCounts: {}
             };
             socket.emit('register_success');
         }
@@ -138,12 +146,27 @@ io.on('connection', (socket) => {
             (m.sender === user1 && m.receiver === user2) || 
             (m.sender === user2 && m.receiver === user1)
         );
+        // Clear unread count for user1 from user2
+        if (users[user1] && users[user1].unreadCounts) {
+            users[user1].unreadCounts[user2] = 0;
+        }
         socket.emit('loaded_messages', conversation);
+        socket.emit('update_unread', users[user1]?.unreadCounts || {});
     });
 
     socket.on('send_message', (data) => {
         messages.push(data);
+        if (users[data.receiver]) {
+            if (!users[data.receiver].unreadCounts) users[data.receiver].unreadCounts = {};
+            users[data.receiver].unreadCounts[data.sender] = (users[data.receiver].unreadCounts[data.sender] || 0) + 1;
+            io.emit('update_unread_' + data.receiver, users[data.receiver].unreadCounts);
+        }
         io.emit('receive_message', data);
+    });
+
+    socket.on('disconnect', () => {
+        delete onlineUsers[socket.id];
+        io.emit('update_online_status', Object.values(onlineUsers));
     });
 });
 

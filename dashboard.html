@@ -293,6 +293,84 @@
         }
 
         .close-modal { background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; }
+
+      /* Smooth Page Entry Transition */
+        body {
+    animation: fadeInPage 0.4s ease-in-out forwards;
+    opacity: 0;
+}
+        @keyframes fadeInPage {
+    to { opacity: 1; }
+}
+
+      /* Hover transition effect for navigational buttons/links */
+        a, button, .auth-btn, .dashboard-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        a:hover, button:hover {
+        transform: translateY(-2px);
+        }
+
+      /* Online Indicator Dot */
+        .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        border: 2px solid #1a1d24;
+        }
+       .status-online { background-color: #22c55e; box-shadow: 0 0 8px rgba(34, 197, 94, 0.6); }
+       .status-offline { background-color: #94a3b8;        }
+
+      /* Unread Badge Notification */
+       .unread-badge {
+       background-color: #ef4444;
+       color: white;
+       font-size: 11px;
+       font-weight: bold;
+       padding: 2px 6px;
+       border-radius: 10px;
+       position: absolute;
+       top: -5px;
+       right: -5px;
+       box-shadow: 0 2px 6px rgba(239, 68, 68, 0.5);
+       }
+
+      /* Custom Modal Backdrop & Dialog Animation */
+       .modal-backdrop {
+       position: fixed;
+       top: 0; left: 0; width: 100%; height: 100%;
+       background: rgba(0, 0, 0, 0.6);
+       backdrop-filter: blur(5px);
+       display: flex;
+       justify-content: center;
+       align-items: center;
+       z-index: 9999;
+       opacity: 0;
+       pointer-events: none;
+       transition: opacity 0.3s ease;
+       }
+       .modal-backdrop.active {
+       opacity: 1;
+       pointer-events: auto;
+       }
+      .modal-content {
+       background: #1e222d;
+       border: 1px solid rgba(255, 255, 255, 0.1);
+       padding: 25px;
+       border-radius: 16px;
+       width: 90%;
+       max-width: 380px;
+       text-align: center;
+       transform: scale(0.8);
+       transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+       color: #fff;
+       }
+       .modal-backdrop.active .modal-content {
+       transform: scale(1);
+       }
+      
     </style>
 </head>
 <body>
@@ -348,6 +426,76 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
+      <div id="logoutModal" class="modal-backdrop">
+    <div class="modal-content">
+        <h3>Sign Out</h3>
+        <p style="color: #94a3b8; margin: 15px 0;">Are you sure you want to log out of Berryweb?</p>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button id="cancelLogout" style="flex: 1; padding: 10px; background: #334155; border: none; color: white; border-radius: 8px; cursor: pointer;">No, Stay</button>
+            <button id="confirmLogout" style="flex: 1; padding: 10px; background: #ef4444; border: none; color: white; border-radius: 8px; cursor: pointer;">Yes, Log Out</button>
+        </div>
+    </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+    const currentUser = localStorage.getItem('berry_user') || localStorage.getItem('username');
+    
+    if (currentUser) {
+        socket.emit('user_online', currentUser);
+        socket.emit('get_user_data', currentUser);
+    }
+
+    // Handle Logout Modal Triggers
+    const logoutBtn = document.getElementById('logoutBtn'); // Your logout button ID
+    const logoutModal = document.getElementById('logoutModal');
+    
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            logoutModal.classList.add('active');
+        });
+    }
+
+    document.getElementById('cancelLogout').addEventListener('click', () => {
+        logoutModal.classList.remove('active');
+    });
+
+    document.getElementById('confirmLogout').addEventListener('click', () => {
+        localStorage.clear();
+        window.location.href = '/login';
+    });
+
+    // Profile sync & Avatar persistence on Dashboard
+    socket.on('user_data_response', (userData) => {
+        if (userData.avatar) {
+            const avatarEls = document.querySelectorAll('.user-avatar-img, .profile-pic-display');
+            avatarEls.forEach(el => el.src = userData.avatar);
+        }
+    });
+
+    // Unread Message Badge on Inbox/Message icon
+    socket.on('update_unread_' + currentUser, (unreadCounts) => {
+        let totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
+        let inboxIconContainer = document.querySelector('.inbox-icon-container, #inboxBtn');
+        if (inboxIconContainer) {
+            let badge = inboxIconContainer.querySelector('.unread-badge');
+            if (totalUnread > 0) {
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'unread-badge';
+                    inboxIconContainer.style.position = 'relative';
+                    inboxIconContainer.appendChild(badge);
+                }
+                badge.innerText = totalUnread;
+            } else if (badge) {
+                badge.remove();
+            }
+        }
+    });
+</script>
+
         // Dual Session Verification (Cookie + LocalStorage)
         function getCookie(name) {
             const value = `; ${document.cookie}`;

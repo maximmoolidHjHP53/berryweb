@@ -219,6 +219,44 @@
     </div>
 
     <script>
+
+const socket = io();
+const currentUser = localStorage.getItem('berry_user') || localStorage.getItem('username');
+
+// Save Profile changes with a clean modern success alert
+document.getElementById('profileForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const bio = document.getElementById('bioInput').value;
+    const avatar = document.getElementById('avatarInput').value; // or base64 image data string
+
+    socket.emit('update_profile', { username: currentUser, bio, avatar });
+    
+    // Save locally for instant rendering
+    if (avatar) localStorage.setItem('berry_avatar', avatar);
+
+    // Custom Success Popup Dialog
+    showSuccessPopup("Profile updated and saved successfully!");
+});
+
+function showSuccessPopup(message) {
+    const existing = document.getElementById('successPopupModal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'successPopupModal';
+    modal.className = 'modal-backdrop active';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div style="font-size: 36px; margin-bottom: 10px;">🎉</div>
+            <h3 style="margin-bottom: 10px;">Success</h3>
+            <p style="color: #94a3b8; margin-bottom: 20px;">${message}</p>
+            <button onclick="document.getElementById('successPopupModal').classList.remove('active'); window.location.href='/dashboard';" style="width: 100%; padding: 10px; background: #22c55e; border: none; color: white; border-radius: 8px; font-weight: bold; cursor: pointer;">OK</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+      
         const currentUser = localStorage.getItem('username') || localStorage.getItem('berry_user');
         if (!currentUser) window.location.href = '/login';
 
