@@ -17,7 +17,7 @@ let messages = [];
 
 // Explicit Page Routes (Fixes "Cannot GET" errors)
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'home.html'));
 });
 
 app.get('/login', (req, res) => {
