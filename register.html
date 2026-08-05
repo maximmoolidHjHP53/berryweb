@@ -257,6 +257,13 @@
     <script src="https://kit.fontawesome.com/your-font-awesome-kit.js" crossorigin="anonymous"></script>
 
     <script>
+        // --- Ironclad Registration Guard: Prevent visiting register if already logged in ---
+const activeUser = localStorage.getItem('berry_session_user') || localStorage.getItem('username');
+if (activeUser) {
+    window.location.replace('/dashboard');
+}
+
+      
         const togglePassword = document.getElementById('togglePassword');
         const passwordInput = document.getElementById('password');
         const toggleConfirm = document.getElementById('toggleConfirm');

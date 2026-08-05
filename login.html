@@ -255,6 +255,12 @@ body {
         </div>
     </div>
     <script>
+      // --- Ironclad Login Guard: Prevent visiting login if session exists ---
+const activeUser = localStorage.getItem('berry_session_user') || localStorage.getItem('username');
+if (activeUser) {
+    window.location.replace('/dashboard');
+}
+
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('username').value.trim();
