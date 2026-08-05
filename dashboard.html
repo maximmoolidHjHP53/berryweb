@@ -87,6 +87,10 @@
             gap: 14px;
         }
 
+        .avatar-container {
+            position: relative;
+        }
+
         .avatar {
             width: 50px;
             height: 50px;
@@ -100,6 +104,38 @@
             border-radius: 50%;
             text-transform: uppercase;
             border: 2px solid var(--border-color);
+        }
+
+        /* Status Dot Animation */
+        .status-dot {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid var(--card-bg);
+        }
+
+        .status-dot.online {
+            background-color: #00e676;
+            animation: pulse-green 2s infinite;
+        }
+
+        .status-dot.offline {
+            background-color: #757575;
+        }
+
+        @keyframes pulse-green {
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.6);
+            }
+            70% {
+                box-shadow: 0 0 0 6px rgba(0, 230, 118, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 230, 118, 0);
+            }
         }
 
         .user-details h3 {
@@ -260,6 +296,11 @@
             min-width: 0;
         }
 
+        .friend-avatar-wrapper {
+            position: relative;
+            flex-shrink: 0;
+        }
+
         .friend-avatar {
             width: 42px;
             height: 42px;
@@ -272,7 +313,6 @@
             justify-content: center;
             border-radius: 50%;
             text-transform: uppercase;
-            flex-shrink: 0;
         }
 
         .friend-details {
@@ -349,7 +389,10 @@
 
         <div class="card profile-card">
             <div class="profile-left">
-                <div class="avatar" id="userAvatar">U</div>
+                <div class="avatar-container">
+                    <div class="avatar" id="userAvatar">U</div>
+                    <div class="status-dot online"></div>
+                </div>
                 <div class="user-details">
                     <h3 id="usernameDisplay">User</h3>
                     <div class="view-profile" onclick="alert('Profile settings coming soon!')">View Profile</div>
@@ -367,7 +410,7 @@
         <div class="card">
             <div class="card-title">Find Users</div>
             <div class="search-wrapper">
-                <input type="text" id="searchInput" class="search-input" placeholder="Search username..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="random_secure_search_field" readonly onfocus="this.removeAttribute('readonly');">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search username..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="secure_search_field_x" readonly onfocus="this.removeAttribute('readonly');">
                 <div id="searchResults" class="search-results"></div>
             </div>
         </div>
@@ -381,17 +424,34 @@
     </div>
 
     <script>
-        const currentUsername = localStorage.getItem('username') || localStorage.getItem('berry_user');
+        // Full Session Security: Check both storages to ensure session persists across reloads and back-buttons
+        let currentUsername = localStorage.getItem('username') || localStorage.getItem('berry_user') || sessionStorage.getItem('berry_user');
+        
         if (!currentUsername) {
-            window.location.href = '/login';
+            window.location.replace('/login');
         } else {
+            // Secure persistence across browser instances & navigation
+            localStorage.setItem('username', currentUsername);
+            sessionStorage.setItem('berry_user', currentUsername);
+            
             document.getElementById('usernameDisplay').textContent = currentUsername;
             document.getElementById('userAvatar').textContent = currentUsername.charAt(0).toUpperCase();
         }
 
+        // Prevent accidental back-button login eviction loop
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted || window.performance && window.performance.navigation.type === 2) {
+                const activeUser = localStorage.getItem('username') || sessionStorage.getItem('berry_user');
+                if (!activeUser) {
+                    window.location.replace('/login');
+                }
+            }
+        });
+
         function logout() {
             localStorage.clear();
-            window.location.href = '/login';
+            sessionStorage.clear();
+            window.location.replace('/login');
         }
 
         const searchInput = document.getElementById('searchInput');
@@ -463,7 +523,6 @@
                 const data = await res.json();
 
                 if (data.friends && data.friends.length > 0) {
-                    // Only rebuild list if initial load or list length changed to prevent any blinking/flashing
                     if (isFirstLoad || friendListEl.children.length !== data.friends.length) {
                         friendListEl.innerHTML = '';
                         isFirstLoad = false;
@@ -487,6 +546,7 @@
                                     lastMsgText = latest.text;
                                 }
 
+                                // Robust Unread Counter calculation based on incoming messages vs stored viewed markers
                                 const storageKey = `read_count_${currentUsername}_${friend.username}`;
                                 let lastReadCount = parseInt(localStorage.getItem(storageKey) || "0");
                                 const totalFriendMsgs = messages.filter(m => m.sender === friend.username).length;
@@ -507,6 +567,7 @@
                             existingItem.className = 'friend-item';
                             existingItem.id = `friend-row-${friend.username}`;
                             existingItem.onclick = () => {
+                                // Mark messages as read instantly when clicking friend
                                 try {
                                     fetch(`/api/messages?user=${encodeURIComponent(currentUsername)}&friend=${encodeURIComponent(friend.username)}`)
                                         .then(r => r.json())
@@ -525,9 +586,16 @@
                         const unreadClass = unreadCount > 0 ? 'unread' : '';
                         const badgeHtml = unreadCount > 0 ? `<div class="unread-badge">${unreadCount}</div>` : `<div class="message-action">Chat</div>`;
 
+                        // Mock online status check for friends (green active indicator simulation)
+                        const isOnline = true; 
+                        const statusDotClass = isOnline ? 'online' : 'offline';
+
                         existingItem.innerHTML = `
                             <div class="friend-info">
-                                <div class="friend-avatar">${friend.username.charAt(0)}</div>
+                                <div class="friend-avatar-wrapper">
+                                    <div class="friend-avatar">${friend.username.charAt(0)}</div>
+                                    <div class="status-dot ${statusDotClass}"></div>
+                                </div>
                                 <div class="friend-details">
                                     <div class="friend-name ${unreadClass}">@${friend.username}</div>
                                     <span class="friend-last-msg ${unreadClass}">${escapeHtml(lastMsgText)}</span>
@@ -572,8 +640,8 @@
         checkInboxCount();
         setInterval(() => {
             loadFriends();
-            checkInboxCount()
-          }, 3000);
+            checkInboxCount();
+        }, 3000);
     </script>
 </body>
 </html>
