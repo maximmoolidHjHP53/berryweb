@@ -31,6 +31,7 @@ const messageSchema = new mongoose.Schema({
     sender: String,
     receiver: String,
     text: String,
+    image: { type: String, default: '' },
     read: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now }
 });
@@ -183,9 +184,9 @@ app.get('/api/messages', async (req, res) => {
 });
 
 app.post('/api/send-message', async (req, res) => {
-    const { sender, receiver, text } = req.body;
+    const { sender, receiver, text, image } = req.body;
     try {
-        await Message.create({ sender, receiver, text, read: false });
+        await Message.create({ sender, receiver, text: text || '', image: image || '', read: false });
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ success: false });
