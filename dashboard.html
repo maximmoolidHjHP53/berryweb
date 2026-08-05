@@ -43,14 +43,12 @@
         }
         .action-btn.logout-btn { background: #ef4444; }
 
-        /* Card Sections */
         .card-box {
             background: #1e222d; border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
         }
         .card-box h3 { font-size: 15px; margin-bottom: 15px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        /* Search Bar with @ symbol */
         .search-wrapper { position: relative; margin-bottom: 12px; }
         .search-symbol {
             position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
@@ -75,7 +73,6 @@
         .status-online { background-color: #22c55e; box-shadow: 0 0 8px rgba(34, 197, 94, 0.7); }
         .status-offline { background-color: #64748b; }
 
-        /* Buttons & Badges */
         .btn-primary {
             background: #22c55e; color: white; border: none; padding: 7px 14px;
             border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: bold; text-decoration: none;
@@ -97,7 +94,6 @@
         }
         @keyframes pulseBadge { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
 
-        /* Logout Modal */
         .modal-backdrop {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(5px);
@@ -174,11 +170,8 @@
         if (!currentUser) {
             window.location.href = '/login';
         } else {
-            // Lock session back navigation protection
             history.pushState(null, null, location.href);
-            window.onpopstate = function () {
-                history.go(1);
-            };
+            window.onpopstate = function () { history.go(1); };
 
             document.getElementById('displayUsername').textContent = currentUser;
             document.getElementById('headerInitial').textContent = currentUser.charAt(0).toUpperCase();
@@ -189,6 +182,7 @@
         let onlineUsersList = [];
         let typingUsersMap = {};
         let currentUserData = { friends: [], friendRequests: [], sentRequests: [], unreadCounts: {} };
+        let usersAvatarsMap = {};
 
         socket.emit('user_online', currentUser);
         socket.emit('get_user_data', currentUser);
@@ -201,10 +195,22 @@
         socket.on('user_data_response', (userData) => {
             currentUserData = userData;
             if (userData.avatar) {
+                usersAvatarsMap[currentUser] = userData.avatar;
                 document.getElementById('headerAvatarContainer').innerHTML = `<img src="${userData.avatar}" alt="Avatar">`;
             }
             renderFriends(userData.friends || []);
             renderRequests(userData.friendRequests || []);
+            if (document.getElementById('searchInput').value.trim() !== '') {
+                handleSearch(document.getElementById('searchInput').value);
+            }
+        });
+
+        socket.on('profile_updated', (data) => {
+            usersAvatarsMap[data.username] = data.profile.avatar;
+            if (data.username === currentUser && data.profile.avatar) {
+                document.getElementById('headerAvatarContainer').innerHTML = `<img src="${data.profile.avatar}" alt="Avatar">`;
+            }
+            renderFriends(currentUserData.friends || []);
             if (document.getElementById('searchInput').value.trim() !== '') {
                 handleSearch(document.getElementById('searchInput').value);
             }
@@ -228,7 +234,6 @@
             socket.emit('get_user_data', currentUser);
         });
 
-        // Live typing indicator listener
         socket.on('typing_status', (data) => {
             if (data.receiver === currentUser) {
                 typingUsersMap[data.sender] = data.isTyping;
@@ -236,7 +241,7 @@
             }
         });
 
-        // Live Search Handler with @ username format
+        // Search with global avatars
         function handleSearch(query) {
             const container = document.getElementById('searchResultsContainer');
             const list = document.getElementById('searchResultsList');
@@ -261,6 +266,7 @@
                 const isFriend = (currentUserData.friends || []).includes(username);
                 const isPending = (currentUserData.sentRequests || []).includes(username);
                 const isSelf = username === currentUser;
+                const avatarHtml = usersAvatarsMap[username] ? `<img src="${usersAvatarsMap[username]}" alt="Avatar">` : username.charAt(0).toUpperCase();
 
                 const item = document.createElement('div');
                 item.className = 'list-item';
@@ -278,7 +284,7 @@
 
                 item.innerHTML = `
                     <div class="item-info">
-                        <div class="avatar-container" style="width: 36px; height: 36px; font-size: 14px; cursor: default;">${username.charAt(0).toUpperCase()}</div>
+                        <div class="avatar-container" style="width: 36px; height: 36px; font-size: 14px; cursor: default;">${avatarHtml}</div>
                         <h4 style="font-size: 14px; font-weight: 600;">@${username}</h4>
                     </div>
                     <div>${actionHtml}</div>
@@ -298,7 +304,7 @@
             socket.emit('respond_friend_request', { username: currentUser, requester, action });
         }
 
-        // Render Friendlist with Online Dots, Unread Badges, and Typing Indicator
+        // Render Friendlist with correct Chat URL redirection (`/chat?to=friendname`)
         function renderFriends(friends) {
             const container = document.getElementById('friendsListContainer');
             if (friends.length === 0) {
@@ -312,13 +318,14 @@
                 const statusClass = isOnline ? 'status-online' : 'status-offline';
                 const unreadCount = (currentUserData.unreadCounts || {})[friend] || 0;
                 const isTyping = typingUsersMap[friend];
+                const avatarHtml = usersAvatarsMap[friend] ? `<img src="${usersAvatarsMap[friend]}" alt="Avatar">` : friend.charAt(0).toUpperCase();
 
                 const item = document.createElement('div');
                 item.className = 'list-item';
                 item.innerHTML = `
                     <div class="item-info">
                         <div style="position: relative;">
-                            <div class="avatar-container" style="width: 40px; height: 40px; font-size: 16px; cursor: default;">${friend.charAt(0).toUpperCase()}</div>
+                            <div class="avatar-container" style="width: 40px; height: 40px; font-size: 16px; cursor: default;">${avatarHtml}</div>
                             <span class="status-indicator ${statusClass}" style="position: absolute; bottom: 0; right: 0;"></span>
                         </div>
                         <div>
@@ -350,11 +357,12 @@
             cardBox.style.display = 'block';
             container.innerHTML = '';
             requests.forEach(requester => {
+                const avatarHtml = usersAvatarsMap[requester] ? `<img src="${usersAvatarsMap[requester]}" alt="Avatar">` : requester.charAt(0).toUpperCase();
                 const item = document.createElement('div');
                 item.className = 'list-item';
                 item.innerHTML = `
                     <div class="item-info">
-                        <div class="avatar-container" style="width: 38px; height: 38px; font-size: 15px; cursor: default;">${requester.charAt(0).toUpperCase()}</div>
+                        <div class="avatar-container" style="width: 38px; height: 38px; font-size: 15px; cursor: default;">${avatarHtml}</div>
                         <h4 style="font-size: 14px; font-weight: 600;">@${requester}</h4>
                     </div>
                     <div style="display: flex; gap: 8px;">
@@ -366,7 +374,6 @@
             });
         }
 
-        // Logout Confirmation Modal -> Redirects to landing page (home.html)
         const logoutBtn = document.getElementById('logoutBtn');
         const logoutModal = document.getElementById('logoutModal');
 

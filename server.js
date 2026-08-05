@@ -2,7 +2,6 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
-const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
@@ -12,24 +11,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname)));
 
-const USERS_FILE = path.join(__dirname, 'users.json');
-
-function loadUsers() {
-    try {
-        if (fs.existsSync(USERS_FILE)) {
-            return JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
-        }
-    } catch (e) { console.error(e); }
-    return {};
-}
-
-function saveUsers() {
-    try {
-        fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-    } catch (e) { console.error(e); }
-}
-
-let users = loadUsers();
+// Global robust in-memory database store (persists during runtime across all clients)
+let globalUsers = {};
 let onlineUsers = {};
 let messages = [];
 
@@ -42,42 +25,13 @@ app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard
 app.get('/chat', (req, res) => res.sendFile(path.join(__dirname, 'chat.html')));
 app.get('/profile', (req, res) => res.sendFile(path.join(__dirname, 'profile.html')));
 
-app.post('/api/login', (req, res) => {
-    const { username, password } = req.body;
-    if (users[username] && users[username].password === password) {
-        res.json({ success: true, username });
-    } else {
-        res.json({ success: false, message: 'Invalid credentials!' });
-    }
-});
-
-app.post('/api/register', (req, res) => {
-    const { username, password } = req.body;
-    if (!username || !password) return res.json({ success: false, message: 'All fields required!' });
-    if (users[username]) return res.json({ success: false, message: 'Username taken!' });
-
-    users[username] = {
-        password,
-        friends: [],
-        friendRequests: [],
-        sentRequests: [],
-        bio: 'Hello! I am using Berryweb.',
-        avatar: '',
-        regDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-        unreadCounts: {}
-    };
-    saveUsers();
-    res.json({ success: true });
-});
-
 io.on('connection', (socket) => {
     socket.on('user_online', (username) => {
         if (username) {
             onlineUsers[socket.id] = username;
-            if (!users[username]) {
-                users[username] = { friends: [], friendRequests: [], sentRequests: [], unreadCounts: {} };
+            if (!globalUsers[username]) {
+                globalUsers[username] = { friends: [], friendRequests: [], sentRequests: [], unreadCounts: {}, bio: 'Hello!', avatar: '', regDate: 'August 5, 2026' };
             }
-            saveUsers();
             io.emit('update_online_status', Object.values(onlineUsers));
         }
     });
@@ -88,10 +42,10 @@ io.on('connection', (socket) => {
             socket.emit('register_error', 'All fields required!');
             return;
         }
-        if (users[username]) {
+        if (globalUsers[username]) {
             socket.emit('register_error', 'Username taken!');
         } else {
-            users[username] = {
+            globalUsers[username] = {
                 password,
                 friends: [],
                 friendRequests: [],
@@ -101,14 +55,14 @@ io.on('connection', (socket) => {
                 regDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
                 unreadCounts: {}
             };
-            saveUsers();
             socket.emit('register_success');
+            io.emit('all_users_list', Object.keys(globalUsers));
         }
     });
 
     socket.on('login_user', (data) => {
         const { username, password } = data;
-        if (users[username] && users[username].password === password) {
+        if (globalUsers[username] && globalUsers[username].password === password) {
             socket.emit('login_success', username);
         } else {
             socket.emit('login_error', 'Invalid username or password!');
@@ -116,13 +70,13 @@ io.on('connection', (socket) => {
     });
 
     socket.on('get_all_users', () => {
-        socket.emit('all_users_list', Object.keys(users));
+        socket.emit('all_users_list', Object.keys(globalUsers));
     });
 
     socket.on('get_user_data', (username) => {
-        if (users[username]) {
-            if (!users[username].sentRequests) users[username].sentRequests = [];
-            socket.emit('user_data_response', users[username]);
+        if (globalUsers[username]) {
+            if (!globalUsers[username].sentRequests) globalUsers[username].sentRequests = [];
+            socket.emit('user_data_response', globalUsers[username]);
         } else {
             socket.emit('user_data_response', {
                 bio: 'Hello!', avatar: '', regDate: 'August 5, 2026', friends: [], friendRequests: [], sentRequests: []
@@ -132,21 +86,23 @@ io.on('connection', (socket) => {
 
     socket.on('update_profile', (data) => {
         const { username, bio, avatar } = data;
-        if (users[username]) {
-            if (bio !== undefined) users[username].bio = bio;
-            if (avatar !== undefined) users[username].avatar = avatar;
-            saveUsers();
-            io.emit('profile_updated_' + username, users[username]);
+        if (globalUsers[username]) {
+            if (bio !== undefined) globalUsers[username].bio = bio;
+            if (avatar !== undefined) globalUsers[username].avatar = avatar;
+            
+            // Broadcast profile update globally to all connected clients
+            io.emit('profile_updated', { username, profile: globalUsers[username] });
+            socket.emit('user_data_response', globalUsers[username]);
         }
     });
 
     socket.on('send_friend_request', (data) => {
         const { sender, receiver } = data;
-        if (users[receiver] && !users[receiver].friendRequests.includes(sender) && !users[receiver].friends.includes(sender)) {
-            users[receiver].friendRequests.push(sender);
-            if (!users[sender].sentRequests) users[sender].sentRequests = [];
-            if (!users[sender].sentRequests.includes(receiver)) users[sender].sentRequests.push(receiver);
-            saveUsers();
+        if (globalUsers[receiver] && !globalUsers[receiver].friendRequests.includes(sender) && !globalUsers[receiver].friends.includes(sender)) {
+            globalUsers[receiver].friendRequests.push(sender);
+            if (!globalUsers[sender].sentRequests) globalUsers[sender].sentRequests = [];
+            if (!globalUsers[sender].sentRequests.includes(receiver)) globalUsers[sender].sentRequests.push(receiver);
+            
             io.emit('refresh_requests_' + receiver);
             io.emit('refresh_friends_' + sender);
         }
@@ -154,20 +110,18 @@ io.on('connection', (socket) => {
 
     socket.on('respond_friend_request', (data) => {
         const { username, requester, action } = data;
-        if (users[username]) {
-            users[username].friendRequests = users[username].friendRequests.filter(u => u !== requester);
-            if (users[requester] && users[requester].sentRequests) {
-                users[requester].sentRequests = users[requester].sentRequests.filter(u => u !== username);
+        if (globalUsers[username]) {
+            globalUsers[username].friendRequests = globalUsers[username].friendRequests.filter(u => u !== requester);
+            if (globalUsers[requester] && globalUsers[requester].sentRequests) {
+                globalUsers[requester].sentRequests = globalUsers[requester].sentRequests.filter(u => u !== username);
             }
             if (action === 'accept') {
-                if (!users[username].friends.includes(requester)) users[username].friends.push(requester);
-                if (users[requester] && !users[requester].friends.includes(username)) {
-                    users[requester].friends.push(username);
+                if (!globalUsers[username].friends.includes(requester)) globalUsers[username].friends.push(requester);
+                if (globalUsers[requester] && !globalUsers[requester].friends.includes(username)) {
+                    globalUsers[requester].friends.push(username);
                 }
-                saveUsers();
                 io.emit('refresh_friends_' + requester);
             }
-            saveUsers();
             io.emit('refresh_friends_' + username);
             io.emit('refresh_requests_' + username);
         }
@@ -183,21 +137,19 @@ io.on('connection', (socket) => {
             (m.sender === user1 && m.receiver === user2) || 
             (m.sender === user2 && m.receiver === user1)
         );
-        if (users[user1] && users[user1].unreadCounts) {
-            users[user1].unreadCounts[user2] = 0;
-            saveUsers();
-            io.emit('update_unread_' + user1, users[user1].unreadCounts);
+        if (globalUsers[user1] && globalUsers[user1].unreadCounts) {
+            globalUsers[user1].unreadCounts[user2] = 0;
+            io.emit('update_unread_' + user1, globalUsers[user1].unreadCounts);
         }
         socket.emit('loaded_messages', conversation);
     });
 
     socket.on('send_message', (data) => {
         messages.push(data);
-        if (users[data.receiver]) {
-            if (!users[data.receiver].unreadCounts) users[data.receiver].unreadCounts = {};
-            users[data.receiver].unreadCounts[data.sender] = (users[data.receiver].unreadCounts[data.sender] || 0) + 1;
-            saveUsers();
-            io.emit('update_unread_' + data.receiver, users[data.receiver].unreadCounts);
+        if (globalUsers[data.receiver]) {
+            if (!globalUsers[data.receiver].unreadCounts) globalUsers[data.receiver].unreadCounts = {};
+            globalUsers[data.receiver].unreadCounts[data.sender] = (globalUsers[data.receiver].unreadCounts[data.sender] || 0) + 1;
+            io.emit('update_unread_' + data.receiver, globalUsers[data.receiver].unreadCounts);
         }
         io.emit('receive_message', data);
     });
