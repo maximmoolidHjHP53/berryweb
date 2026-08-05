@@ -1,77 +1,756 @@
 <!DOCTYPE html>
-<html lang="en">
+< lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Friends</title>
+    <title>Berryweb Messenger - Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * { box-sizing: border-box; }
-        body { font-family: -apple-system, sans-serif; background: #0f172a; color: #fff; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        header { background: #1e293b; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
-        .content { padding: 20px; flex: 1; overflow-y: auto; }
-        .add-box { display: flex; gap: 10px; margin-bottom: 20px; }
-        input { flex: 1; background: #1e293b; border: 1px solid #334155; padding: 10px; border-radius: 8px; color: #fff; outline: none; }
-        button { background: #2563eb; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .friend-item { background: #1e293b; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155; cursor: pointer; }
-        .friend-item:hover { background: #334155; }
+        :root {
+            --bg-primary: #0e1621;
+            --bg-secondary: #17212b;
+            --bg-tertiary: #242f3d;
+            --accent-blue: #2fa572;
+            --accent-hover: #37b880;
+            --text-main: #f5f5f5;
+            --text-muted: #8a96a3;
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --shadow-elevation: 0 12px 40px rgba(0, 0, 0, 0.6);
+            --transition-smooth: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg-primary);
+        }
+
+        /* Sidebar Navigation Shell */
+        .sidebar {
+            width: 400px;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-glass);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 5;
+            box-shadow: 5px 0 25px rgba(0,0,0,0.3);
+        }
+
+        /* Ultra Realistic Header */
+        .sidebar-header {
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-glass);
+            background: rgba(23, 33, 43, 0.7);
+            backdrop-filter: blur(12px);
+        }
+
+        .user-profile-preview {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 30px;
+            transition: var(--transition-smooth);
+        }
+
+        .user-profile-preview:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .avatar-circle {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2fa572, #1b6343);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: white;
+            box-shadow: 0 4px 12px rgba(47, 165, 114, 0.3);
+            transition: var(--transition-smooth);
+            position: relative;
+        }
+
+        .avatar-circle:hover {
+            transform: scale(1.05);
+        }
+
+        .user-identity h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+        }
+
+        .user-identity span {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        /* Settings Icon Button */
+        .settings-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-glass);
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: var(--transition-smooth);
+        }
+
+        .settings-btn:hover {
+            background: rgba(47, 165, 114, 0.15);
+            color: var(--accent-blue);
+            border-color: rgba(47, 165, 114, 0.3);
+            transform: rotate(90deg) scale(1.05);
+        }
+
+        /* Settings Dropdown Box with Smooth Transition Animation */
+        .settings-dropdown {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-glass);
+            border-radius: 14px;
+            width: 220px;
+            box-shadow: var(--shadow-elevation);
+            z-index: 100;
+            padding: 8px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-15px) scale(0.95);
+            transition: var(--transition-smooth);
+            backdrop-filter: blur(20px);
+        }
+
+        .settings-dropdown.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+
+        .logout-trigger-btn {
+            width: 100%;
+            background: rgba(235, 87, 87, 0.1);
+            border: 1px solid rgba(235, 87, 87, 0.2);
+            color: #eb5757;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition-smooth);
+        }
+
+        .logout-trigger-btn:hover {
+            background: #eb5757;
+            color: white;
+            box-shadow: 0 4px 15px rgba(235, 87, 87, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* Ultra Realistic Search Bar Section */
+        .search-section {
+            padding: 14px 20px;
+            background: transparent;
+        }
+
+        .search-bar-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: var(--bg-primary);
+            border: 1.5px solid var(--border-glass);
+            border-radius: 14px;
+            padding: 0 14px;
+            transition: var(--transition-smooth);
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
+        }
+
+        .search-bar-wrapper:focus-within {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(47, 165, 114, 0.15), inset 0 2px 6px rgba(0,0,0,0.4);
+        }
+
+        /* Permanent Intact At-Symbol Prefix */
+        .search-permanent-prefix {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.9rem;
+            user-select: none;
+            pointer-events: none;
+            padding-right: 8px;
+            border-right: 1px solid var(--border-glass);
+            margin-right: 10px;
+        }
+
+        .search-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            padding: 11px 0;
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        /* Friends / Search Results Scroll Area */
+        .contacts-scroll-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 12px 12px 12px;
+        }
+
+        .contacts-scroll-area::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .contacts-scroll-area::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+
+        .section-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            padding: 8px 10px;
+            font-weight: 600;
+        }
+
+        /* Telegram Style Friend Card */
+        .contact-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 10px 12px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            margin-bottom: 4px;
+            border: 1px solid transparent;
+            position: relative;
+        }
+
+        .contact-card:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--border-glass);
+            transform: translateX(4px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .contact-avatar-wrapper {
+            position: relative;
+        }
+
+        .contact-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #242f3d, #17212b);
+            border: 1px solid var(--border-glass);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: var(--accent-blue);
+            font-size: 1.1rem;
+        }
+
+        /* Active Green Circle / Offline Status Indicator */
+        .status-dot {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid var(--bg-secondary);
+        }
+
+        .status-dot.online {
+            background-color: #27ae60;
+            box-shadow: 0 0 8px rgba(39, 174, 96, 0.6);
+        }
+
+        .status-dot.offline {
+            background-color: #7f8c8d;
+        }
+
+        .contact-info {
+            flex: 1;
+        }
+
+        .contact-info h4 {
+            font-size: 0.98rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .contact-info p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .no-results-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .no-results-state i {
+            font-size: 2.2rem;
+            color: rgba(255,255,255,0.08);
+        }
+
+        /* Main Workspace Pane */
+        .workspace-pane {
+            flex: 1;
+            background: radial-gradient(circle at center, #131c27 0%, #0b1118 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+        }
+
+        .workspace-welcome-box {
+            max-width: 420px;
+            animation: fadeInScale 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .welcome-icon-glow {
+            width: 90px;
+            height: 90px;
+            background: rgba(47, 165, 114, 0.1);
+            border: 2px solid rgba(47, 165, 114, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px auto;
+            color: var(--accent-blue);
+            font-size: 2.2rem;
+            box-shadow: 0 0 35px rgba(47, 165, 114, 0.2);
+        }
+
+        .workspace-welcome-box h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: 0.3px;
+        }
+
+        .workspace-welcome-box p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* Logout Confirmation Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition-smooth);
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            width: 360px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: var(--shadow-elevation);
+            transform: scale(0.85) translateY(20px);
+            transition: var(--transition-smooth);
+        }
+
+        .modal-overlay.active .modal-card {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(235, 87, 87, 0.12);
+            color: #eb5757;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin: 0 auto 18px auto;
+        }
+
+        .modal-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .modal-card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+            line-height: 1.4;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-stay {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-glass);
+            color: var(--text-main);
+        }
+
+        .btn-stay:hover {
+            background: rgba(255,255,255,0.08);
+            transform: translateY(-2px);
+        }
+
+        .btn-confirm-logout {
+            background: #eb5757;
+            border: none;
+            color: white;
+            box-shadow: 0 4px 15px rgba(235, 87, 87, 0.35);
+        }
+
+        .btn-confirm-logout:hover {
+            background: #d44343;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(235, 87, 87, 0.5);
+        }
+
+        /* Button Loading Spinner Animation */
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid #ffffff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.92);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
     </style>
 </head>
 <body>
-    <header>
-        <span id="welcome-user">Dashboard</span>
-        <button onclick="localStorage.clear(); window.location.href='/'" style="background:#ef4444; padding:5px 10px; font-size:0.8rem;">Logout</button>
-    </header>
+  <div class="app-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="user-profile-preview" onclick="navigateToProfile()" title="View Profile">
+                    <div class="avatar-circle" id="userInitial">U</div>
+                    <div class="user-identity">
+                        <h3 id="displayUsername">Loading...</h3>
+                        <span>My Account</span>
+                    </div>
+                </div>
 
-    <div class="content">
-        <h3>Add Friend</h3>
-        <div class="add-box">
-            <input type="text" id="friend-input" placeholder="Enter friend's username..." autocomplete="off">
-            <button onclick="addFriend()">Add</button>
+                <div class="header-actions">
+                    <button class="settings-btn" id="settingsToggleBtn" title="Settings">
+                        <i class="fa-solid fa-gear"></i>
+                    </button>
+
+                    <div class="settings-dropdown" id="settingsDropdownMenu">
+                        <button class="logout-trigger-btn" id="logoutModalOpenBtn">
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i> Log Out
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="search-section">
+                <div class="search-bar-wrapper">
+                    <div class="search-permanent-prefix">
+                        <i class="fa-solid fa-magnifying-glass" style="font-size: 0.8rem;"></i>
+                        <span>@</span>
+                    </div>
+                    <input type="text" id="userSearchInput" class="search-input" placeholder="Search users...">
+                </div>
+            </div>
+
+            <div class="contacts-scroll-area" id="contactsContainer">
+                <div class="section-label">Your Friends List</div>
+                </div>
         </div>
 
-        <h3>Your Friends List</h3>
-        <div id="friends-list"></div>
+        <div class="workspace-pane">
+            <div class="workspace-welcome-box">
+                <div class="welcome-icon-glow">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <h2>Berryweb Secure Cloud</h2>
+                <p>Select any friend from your list above to open direct encrypted messaging instantly.</p>
+            </div>
+        </div>
     </div>
 
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <div class="modal-overlay" id="logoutModalOverlay">
+        <div class="modal-card">
+            <div class="modal-icon">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3>Terminate Session?</h3>
+            <p>Are you sure you want to log out of your Berryweb account? Yes to continue, No to stay in the site.</p>
+            <div class="modal-actions">
+                <button class="modal-btn btn-stay" id="modalStayBtn">
+                    <span>No</span>
+                </button>
+                <button class="modal-btn btn-confirm-logout" id="modalConfirmLogoutBtn">
+                    <span>Yes, continue</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
     <script>
-        const currentUser = localStorage.getItem('chat_user');
-        if (!currentUser) window.location.href = '/';
-        document.getElementById('welcome-user').textContent = `Welcome, ${currentUser}`;
+        const currentUser = localStorage.getItem('berry_user');
+        if (!currentUser) {
+            window.location.href = '/login';
+        }
 
-        const socket = io();
+        // Initialize UI Elements
+        document.getElementById('displayUsername').textContent = currentUser;
+        document.getElementById('userInitial').textContent = currentUser.charAt(0).toUpperCase();
 
-        function addFriend() {
-            const friendName = document.getElementById('friend-input').value.trim();
-            if (friendName) {
-                socket.emit('add_friend', { user: currentUser, friend: friendName });
-                document.getElementById('friend-input').value = '';
+        // Comprehensive Mock Network Users / Friends Dataset with Status Simulation
+        const allSystemUsers = [
+            { username: "BerryAdmin", status: "online", lastSeen: null },
+            { username: "AlphaCoder", status: "online", lastSeen: null },
+            { username: "BatmanDev", status: "offline", lastSeen: "Offline 2m ago" },
+            { username: "CyberKnight", status: "online", lastSeen: null },
+            { username: "DeltaForce", status: "offline", lastSeen: "Offline 45s ago" },
+            { username: "EchoWatcher", status: "online", lastSeen: null }
+        ].filter(u => u.username !== currentUser);
+
+        const searchInput = document.getElementById('userSearchInput');
+        const contactsContainer = document.getElementById('contactsContainer');
+
+        function renderContacts(usersList, isSearchActive = false) {
+            if (usersList.length === 0) {
+                contactsContainer.innerHTML = `
+                    <div class="no-results-state">
+                        <i class="fa-solid fa-folder-open"></i>
+                        <span>No results</span>
+                    </div>
+                `;
+                return;
             }
-        }
 
-        socket.on('friend_added_success', (data) => {
-            renderFriends(data.list);
-        });
+            let html = `<div class="section-label">${isSearchActive ? 'Search Results' : 'Your Friends List'}</div>`;
+            usersList.forEach(user => {
+                const isOnline = user.status === 'online';
+                const statusClass = isOnline ? 'online' : 'offline';
+                const statusText = isOnline ? 'Active now' : (user.lastSeen || 'Offline');
 
-        socket.on('error_msg', (msg) => {
-            alert(msg);
-        });
-
-        function renderFriends(list) {
-            const container = document.getElementById('friends-list');
-            container.innerHTML = '';
-            list.forEach(friend => {
-                const div = document.createElement('div');
-                div.className = 'friend-item';
-                div.innerHTML = `<span>💬 ${friend}</span> <button onclick="startChat('${friend}')">Chat</button>`;
-                container.appendChild(div);
+                html += `
+                    <div class="contact-card" onclick="openChatWith('${user.username}')">
+                        <div class="contact-avatar-wrapper">
+                            <div class="contact-avatar">${user.username.charAt(0).toUpperCase()}</div>
+                            <div class="status-dot ${statusClass}"></div>
+                        </div>
+                        <div class="contact-info">
+                            <h4>@${user.username}</h4>
+                            <p>${statusText}</p>
+                        </div>
+                    </div>
+                `;
             });
+            contactsContainer.innerHTML = html;
         }
 
-        function startChat(friendName) {
-            localStorage.setItem('active_chat', friendName);
+        // Default view: Show friends list
+        renderContacts(allSystemUsers, false);
+
+        // Progressive Substring Match Search (B -> BA -> etc.)
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim().toLowerCase();
+            
+            if (query === "") {
+                renderContacts([], true); // Shows "no results" when search input is fully erased back
+                return;
+            }
+
+            const filtered = allSystemUsers.filter(user => 
+                user.username.toLowerCase().startsWith(query)
+            );
+
+            renderContacts(filtered, true);
+        });
+
+        function openChatWith(username) {
+            localStorage.setItem('berry_active_chat', username);
             window.location.href = '/chat';
         }
+
+        function navigateToProfile() {
+            window.location.href = '/profile';
+        }
+
+        // Settings Dropdown Menu Slide & Fade Animation Control
+        const settingsToggleBtn = document.getElementById('settingsToggleBtn');
+        const settingsDropdownMenu = document.getElementById('settingsDropdownMenu');
+
+        settingsToggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            settingsDropdownMenu.classList.toggle('active');
+        });
+
+        window.addEventListener('click', () => {
+            if (settingsDropdownMenu.classList.contains('active')) {
+                settingsDropdownMenu.classList.remove('active');
+            }
+        });
+
+        settingsDropdownMenu.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        // Logout Confirmation Modal Logic with Button Loading Animations
+        const logoutModalOpenBtn = document.getElementById('logoutModalOpenBtn');
+        const logoutModalOverlay = document.getElementById('logoutModalOverlay');
+        const modalStayBtn = document.getElementById('modalStayBtn');
+        const modalConfirmLogoutBtn = document.getElementById('modalConfirmLogoutBtn');
+
+        logoutModalOpenBtn.addEventListener('click', () => {
+            settingsDropdownMenu.classList.remove('active');
+            logoutModalOverlay.classList.add('active');
+        });
+
+        modalStayBtn.addEventListener('click', (e) => {
+            const btnSpan = modalStayBtn.querySelector('span');
+            btnSpan.innerHTML = `<span class="spinner"></span>`;
+            setTimeout(() => {
+                logoutModalOverlay.classList.remove('active');
+                btnSpan.textContent = 'No';
+            }, 300);
+        });
+
+        modalConfirmLogoutBtn.addEventListener('click', (e) => {
+            const btnSpan = modalConfirmLogoutBtn.querySelector('span');
+            btnSpan.innerHTML = `<span class="spinner"></span>`;
+            
+            // Simulate 1 minute offline transition timer simulation before clearing session storage
+            setTimeout(() => {
+                localStorage.removeItem('berry_user');
+                localStorage.removeItem('berry_active_chat');
+                window.location.href = '/login';
+            }, 600);
+        });
+
+        logoutModalOverlay.addEventListener('click', (e) => {
+            if (e.target === logoutModalOverlay) {
+                logoutModalOverlay.classList.remove('active');
+            }
+        });
     </script>
 </body>
 </html>
