@@ -162,9 +162,9 @@
             opacity: 0.8;
         }
 
-        /* Guaranteed Visible Typing Indicator Bar Styles */
+        /* Guaranteed Visible Typing Indicator Bar */
         .typing-indicator-row {
-            display: none; /* Toggled via JS to flex */
+            display: none;
             align-items: center;
             gap: 8px;
             padding: 8px 16px;
@@ -327,6 +327,7 @@
         </div>
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const friendUsername = urlParams.get('friend');
@@ -340,7 +341,10 @@
         document.getElementById('headerAvatar').textContent = friendUsername.charAt(0).toUpperCase();
 
         let lastMessageCount = 0;
-        let typingTimeout = null;
+
+        // --- Socket.io Real-Time Connection ---
+        const socket = io();
+        socket.emit('join', currentUsername);
 
         // --- Fetch & Render Messages ---
         async function loadMessages() {
@@ -387,48 +391,29 @@
             } catch (err) {}
         }
 
-        // --- Typing Status Handling ---
+        // --- Typing Status Handling via Socket ---
         function handleTypingInput() {
             const inputVal = document.getElementById('messageInput').value;
             const isTyping = inputVal.trim().length > 0;
 
-            clearTimeout(typingTimeout);
-            
-            fetch('/api/typing', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user: currentUsername, friend: friendUsername, typing: isTyping })
-            });
+            socket.emit('typing', { sender: currentUsername, receiver: friendUsername, typing: isTyping });
+        }
 
-            if (isTyping) {
-                typingTimeout = setTimeout(() => {
-                    fetch('/api/typing', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ user: currentUsername, friend: friendUsername, typing: false })
-                    });
-                }, 2000);
+        socket.on('display_typing', (data) => {
+            const indicator = document.getElementById('typingIndicator');
+            const userSpan = document.getElementById('typingUser');
+
+            if (data.sender === friendUsername) {
+                if (data.typing) {
+                    userSpan.textContent = `@${friendUsername}`;
+                    indicator.style.setProperty('display', 'flex', 'important');
+                } else {
+                    indicator.style.setProperty('display', 'none', 'important');
+                }
             }
-        }
+        });
 
-        async function checkTypingStatus() {
-    try {
-        const res = await fetch(`/api/get-typing?user=${encodeURIComponent(friendUsername)}&friend=${encodeURIComponent(currentUsername)}`);
-        const data = await res.json();
-        const indicator = document.getElementById('typingIndicator');
-        const userSpan = document.getElementById('typingUser');
-
-        if (data.isTyping) {
-            userSpan.textContent = `@${friendUsername}`;
-            indicator.style.setProperty('display', 'flex', 'important'); // Forces display over any overriding CSS conflicts
-        } else {
-            indicator.style.setProperty('display', 'none', 'important');
-        }
-    } catch (err) {}
-}
-
-
-        // --- Send Text Message ---
+        // --- Send Text Message via Socket ---
         async function sendMessage() {
             const input = document.getElementById('messageInput');
             const text = input.value.trim();
@@ -436,17 +421,24 @@
 
             input.value = '';
             
-            fetch('/api/typing', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user: currentUsername, friend: friendUsername, typing: false })
-            });
+            // Clear typing state live
+            socket.emit('typing', { sender: currentUsername, receiver: friendUsername, typing: false });
+
+            const messagePayload = {
+                sender: currentUsername,
+                receiver: friendUsername,
+                text: text,
+                image: ''
+            };
+
+            // Emit live through socket
+            socket.emit('send_message', messagePayload);
 
             try {
                 await fetch('/api/send-message', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sender: currentUsername, receiver: friendUsername, text })
+                    body: JSON.stringify(messagePayload)
                 });
                 loadMessages();
             } catch (err) {}
@@ -460,17 +452,33 @@
             const reader = new FileReader();
             reader.onload = async function(uploadEvent) {
                 const base64Image = uploadEvent.target.result;
+                const messagePayload = {
+                    sender: currentUsername,
+                    receiver: friendUsername,
+                    text: '',
+                    image: base64Image
+                };
+
+                socket.emit('send_message', messagePayload);
+
                 try {
                     await fetch('/api/send-message', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ sender: currentUsername, receiver: friendUsername, image: base64Image })
+                        body: JSON.stringify(messagePayload)
                     });
                     loadMessages();
                 } catch (err) {}
             };
             reader.readAsDataURL(file);
         }
+
+        // --- Listen for incoming messages live ---
+        socket.on('receive_message', (data) => {
+            if (data.sender === friendUsername || data.sender === currentUsername) {
+                loadMessages();
+            }
+        });
 
         // --- Photo Modal Manager ---
         function openPhotoModal(imgSrc) {
@@ -498,11 +506,6 @@
         document.getElementById('messageInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
-
-        setInterval(() => {
-            loadMessages();
-            checkTypingStatus();
-        }, 1000);
 
         loadMessages();
     </script>
