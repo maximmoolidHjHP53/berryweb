@@ -5,10 +5,14 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
+// Replace your existing io initialization with this:
 const io = new Server(server, {
     cors: { origin: "*" },
-    transports: ['websocket', 'polling']
+    transports: ['websocket', 'polling'],
+    pingTimeout: 60000,
+    pingInterval: 25000
 });
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

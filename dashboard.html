@@ -178,6 +178,18 @@
         }
 
         const socket = io();
+
+      // Replace your existing socket initialization with this:
+const socket = io({
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    timeout: 20000
+});
+
+      
         let allRegisteredUsers = [];
         let onlineUsersList = [];
         let typingUsersMap = {};

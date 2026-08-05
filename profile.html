@@ -146,6 +146,20 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
+
+      // Replace your existing socket initialization with this:
+const socket = io({
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    timeout: 20000
+});
+
+
+      
+      
         const currentUser = localStorage.getItem('username') || localStorage.getItem('berry_user');
         let loadedImage = null;
         let imgX = 0, imgY = 0, isDragging = false, startX, startY;
