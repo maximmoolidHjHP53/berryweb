@@ -1,7 +1,7 @@
 {
   "name": "berryweb",
   "version": "1.0.0",
-  "description": "Berryweb chat application",
+  "description": "Secure web application with real-time socket and auth",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
