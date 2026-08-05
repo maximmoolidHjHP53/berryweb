@@ -59,8 +59,10 @@
             align-items: center;
             justify-content: space-between;
             border-bottom: 1px solid var(--border-glass);
-            background: rgba(23, 33, 43, 0.85);
+            background: rgba(23, 33, 43, 0.95);
             backdrop-filter: blur(12px);
+            position: relative;
+            z-index: 50;
         }
 
         .user-profile-preview {
@@ -141,17 +143,17 @@
             transform: rotate(90deg) scale(1.05);
         }
 
-        /* Settings Dropdown Box with Smooth Transition Animation */
+        /* Settings Dropdown Box Fixed Above Layout Layers */
         .settings-dropdown {
             position: absolute;
-            top: 50px;
-            right: 0;
+            top: 60px;
+            right: 20px;
             background: var(--bg-tertiary);
             border: 1px solid var(--border-glass);
             border-radius: 14px;
             width: 220px;
-            box-shadow: var(--shadow-elevation);
-            z-index: 100;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.8);
+            z-index: 99999;
             padding: 8px;
             opacity: 0;
             visibility: hidden;
@@ -242,7 +244,7 @@
             font-weight: 400;
         }
 
-        /* Friends / Search Results Scroll Area */
+        /* Global Users / Friends Scroll Area */
         .contacts-scroll-area {
             flex: 1;
             overflow-y: auto;
@@ -270,7 +272,7 @@
             font-weight: 600;
         }
 
-        /* Telegram Style Friend Card */
+        /* Telegram Style User Card */
         .contact-card {
             display: flex;
             align-items: center;
@@ -310,7 +312,7 @@
             font-size: 1.2rem;
         }
 
-        /* Active Green Circle / Offline Status Indicator */
+        /* Active Green Circle Status Indicator */
         .status-dot {
             position: absolute;
             bottom: 2px;
@@ -319,15 +321,8 @@
             height: 13px;
             border-radius: 50%;
             border: 2px solid var(--bg-secondary);
-        }
-
-        .status-dot.online {
             background-color: #27ae60;
             box-shadow: 0 0 8px rgba(39, 174, 96, 0.6);
-        }
-
-        .status-dot.offline {
-            background-color: #7f8c8d;
         }
 
         .contact-info {
@@ -374,7 +369,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            z-index: 999999;
             opacity: 0;
             visibility: hidden;
             transition: var(--transition-smooth);
@@ -470,7 +465,7 @@
             box-shadow: 0 6px 20px rgba(235, 87, 87, 0.45);
         }
 
-        /* Button Loading Spinner Animation */
+        /* Spinner Animation */
         .spinner {
             width: 16px;
             height: 16px;
@@ -519,7 +514,7 @@
                         <i class="fa-solid fa-magnifying-glass" style="font-size: 0.8rem;"></i>
                         <span>@</span>
                     </div>
-                    <input type="text" id="userSearchInput" class="search-input" placeholder="Search friends (e.g., b, ba)...">
+                    <input type="text" id="userSearchInput" class="search-input" placeholder="Search all users globally...">
                 </div>
             </div>
 
@@ -564,13 +559,14 @@
         document.getElementById('userInitial').textContent = currentUser.charAt(0).toUpperCase();
 
         const socket = io();
-        let userFriendsList = []; // Only real database friends or added friends
+        let allRegisteredUsers = [];
 
-        // Request user's true added friends from server/database
-        socket.emit('get_user_friends', { username: currentUser });
+        // Fetch all registered users from database server
+        socket.emit('get_all_users');
 
-        socket.on('user_friends_list', (data) => {
-            userFriendsList = data.friends || [];
+        socket.on('all_users_list', (users) => {
+            // Exclude current user from global directory listing
+            allRegisteredUsers = (users || []).filter(u => u !== currentUser);
             renderContacts("");
         });
 
@@ -580,27 +576,26 @@
         function renderContacts(query) {
             const trimmedQuery = query.trim().toLowerCase();
 
-            // When search input is empty or cleared, hide all search results / keep search inactive
+            // When search input is empty, show global registered users directory
             if (trimmedQuery === "") {
-                if (userFriendsList.length === 0) {
+                if (allRegisteredUsers.length === 0) {
                     contactsContainer.innerHTML = `
                         <div class="empty-state">
                             <i class="fa-solid fa-users"></i>
-                            <span>No friends added yet. Start searching real usernames above!</span>
+                            <span>No other registered users found on Berryweb yet.</span>
                         </div>
                     `;
                 } else {
-
-                  let html = `<div class="section-label">Your Friends List</div>`;
-                    userFriendsList.forEach(friendName => {
+                    let html = `<div class="section-label">All Berryweb Users</div>`;
+                    allRegisteredUsers.forEach(username => {
                         html += `
-                            <div class="contact-card" onclick="openChatWith('${friendName}')">
+                            <div class="contact-card" onclick="openChatWith('${username}')">
                                 <div class="contact-avatar-wrapper">
-                                    <div class="contact-avatar">${friendName.charAt(0).toUpperCase()}</div>
-                                    <div class="status-dot online"></div>
+                                    <div class="contact-avatar">${username.charAt(0).toUpperCase()}</div>
+                                    <div class="status-dot"></div>
                                 </div>
                                 <div class="contact-info">
-                                    <h4>@${friendName}</h4>
+                                    <h4>@${username}</h4>
                                     <p>Active now</p>
                                 </div>
                             </div>
@@ -611,31 +606,31 @@
                 return;
             }
 
-            // Live Filter through real user friends list
-            const matchedFriends = userFriendsList.filter(name => 
+            // Live global filter across all registered database users
+            const matchedUsers = allRegisteredUsers.filter(name => 
                 name.toLowerCase().startsWith(trimmedQuery)
             );
 
-            if (matchedFriends.length === 0) {
+            if (matchedUsers.length === 0) {
                 contactsContainer.innerHTML = `
                     <div class="empty-state">
                         <i class="fa-solid fa-user-slash"></i>
-                        <span>No matching friends found for "@${query}"</span>
+                        <span>No user found matching "@${query}"</span>
                     </div>
                 `;
                 return;
             }
 
             let html = `<div class="section-label">Search Results</div>`;
-            matchedFriends.forEach(friendName => {
+            matchedUsers.forEach(username => {
                 html += `
-                    <div class="contact-card" onclick="openChatWith('${friendName}')">
+                    <div class="contact-card" onclick="openChatWith('${username}')">
                         <div class="contact-avatar-wrapper">
-                            <div class="contact-avatar">${friendName.charAt(0).toUpperCase()}</div>
-                            <div class="status-dot online"></div>
+                            <div class="contact-avatar">${username.charAt(0).toUpperCase()}</div>
+                            <div class="status-dot"></div>
                         </div>
                         <div class="contact-info">
-                            <h4>@${friendName}</h4>
+                            <h4>@${username}</h4>
                             <p>Active now</p>
                         </div>
                     </div>
@@ -644,7 +639,7 @@
             contactsContainer.innerHTML = html;
         }
 
-        // Live Search Input Handler (Clearing back completely hides search list without saying "no results")
+        // Live Search Input Listener
         searchInput.addEventListener('input', (e) => {
             renderContacts(e.target.value);
         });
@@ -658,7 +653,7 @@
             window.location.href = '/profile';
         }
 
-        // Settings Dropdown Menu Slide & Fade Animation Control
+        // Settings Dropdown Menu Slide & Fade Animation Control (Fixed Layering)
         const settingsToggleBtn = document.getElementById('settingsToggleBtn');
         const settingsDropdownMenu = document.getElementById('settingsDropdownMenu');
 
@@ -701,7 +696,6 @@
             const btnSpan = modalConfirmLogoutBtn.querySelector('span');
             btnSpan.innerHTML = `<span class="spinner"></span>`;
             
-            // 1-minute offline simulation cleanup timer before destroying session
             setTimeout(() => {
                 localStorage.removeItem('berry_user');
                 localStorage.removeItem('username');
