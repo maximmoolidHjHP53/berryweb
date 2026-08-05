@@ -498,106 +498,88 @@
             } catch (err) {}
         }
 
-        let isFirstLoad = true;
+        let isFirstLoad = true
 
-        async function loadFriends() {
-            const friendListEl = document.getElementById('friendList');
-            try {
-                const [friendsRes, unreadRes] = await Promise.all([
-                    fetch(`/api/friends?user=${encodeURIComponent(currentUsername)}`),
-                    fetch(`/api/unread-counts?user=${encodeURIComponent(currentUsername)}`).catch(() => ({ json: () => ({ counts: {} }) }))
-                ]);
-                
-                const data = await friendsRes.json();
-                const unreadData = await unreadRes.json();
-                const unreadCounts = unreadData.counts || {};
+            async function loadFriends() {
+    const friendListEl = document.getElementById('friendList');
+    try {
+        const [friendsRes, unreadRes] = await Promise.all([
+            fetch(`/api/friends?user=${encodeURIComponent(currentUsername)}`),
+            fetch(`/api/unread-counts?user=${encodeURIComponent(currentUsername)}`).catch(() => ({ json: () => ({ counts: {} }) }))
+        ]);
+        
+        const data = await friendsRes.json();
+        const unreadData = await unreadRes.json();
+        const unreadCounts = unreadData.counts || {};
 
-                if (data.friends && data.friends.length > 0) {
-                    if (isFirstLoad || friendListEl.children.length !== data.friends.length) {
-                        friendListEl.innerHTML = '';
-                        isFirstLoad = false;
-                    }
+        if (data.friends && data.friends.length > 0) {
+            friendListEl.innerHTML = '';
 
-                    for (let i = 0; i < data.friends.length; i++) {
-                        const friend = data.friends[i];
-                        let lastMsgText = "Tap to start chatting";
-                        let unreadCount = unreadCounts[friend.username] || 0;
+            for (let i = 0; i < data.friends.length; i++) {
+                const friend = data.friends[i];
+                let lastMsgText = "Tap to start chatting";
+                let unreadCount = unreadCounts[friend.username] || 0;
 
-                        try {
-                            const msgRes = await fetch(`/api/messages?user=${encodeURIComponent(currentUsername)}&friend=${encodeURIComponent(friend.username)}`);
-                            const msgData = await msgRes.json();
-                            if (msgData.messages && msgData.messages.length > 0) {
-                                const messages = msgData.messages;
-                                const latest = messages[messages.length - 1];
-                                
-                                if (latest.image && !latest.text) {
-                                    lastMsgText = "📷 Sent a photo";
-                                } else {
-                                    lastMsgText = latest.text;
-                                }
-
-                                const totalFriendMsgs = messages.filter(m => m.sender === friend.username).length;
-                                const storageKey = `berry_read_count_${currentUsername}_${friend.username}`;
-                                let lastReadCount = parseInt(localStorage.getItem(storageKey) || "0");
-                                if (!localStorage.getItem(storageKey)) {
-                                    localStorage.setItem(storageKey, totalFriendMsgs.toString());
-                                    lastReadCount = totalFriendMsgs;
-                                }
-                                const clientCalculatedUnread = Math.max(0, totalFriendMsgs - lastReadCount);
-                                if (clientCalculatedUnread > unreadCount) {
-                                    unreadCount = clientCalculatedUnread;
-                                }
-                            }
-                        } catch (e) {}
-
-                        let existingItem = document.getElementById(`friend-row-${friend.username}`);
+                try {
+                    const msgRes = await fetch(`/api/messages?user=${encodeURIComponent(currentUsername)}&friend=${encodeURIComponent(friend.username)}`);
+                    const msgData = await msgRes.json();
+                    if (msgData.messages && msgData.messages.length > 0) {
+                        const messages = msgData.messages;
+                        const latest = messages[messages.length - 1];
                         
-                        if (!existingItem) {
-                            existingItem = document.createElement('li');
-                            existingItem.className = 'friend-item';
-                            existingItem.id = `friend-row-${friend.username}`;
-                            existingItem.onclick = async () => {
-                                try {
-                                    localStorage.setItem(`berry_read_count_${currentUsername}_${friend.username}`, '999999');
-                                    await fetch('/api/mark-read', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ user: currentUsername, friend: friend.username })
-                                    });
-                                } catch(err){}
-                                window.location.href = `/chat?friend=${encodeURIComponent(friend.username)}`;
-                            };
-                            friendListEl.appendChild(existingItem);
+                        if (latest.image && !latest.text) {
+                            lastMsgText = "📷 Sent a photo";
+                        } else {
+                            lastMsgText = latest.text;
                         }
-                        
-                        const unreadClass = unreadCount > 0 ? 'unread' : '';
-                        const badgeHtml = unreadCount > 0 ? `<div class="unread-badge">${unreadCount}</div>` : `<div class="message-action">Chat</div>`;
-
-                        existingItem.innerHTML = `
-                            <div class="friend-info">
-                                <div class="friend-avatar-wrapper">
-                                    <div class="friend-avatar">${friend.username.charAt(0)}</div>
-                                    <div class="status-dot"></div>
-                                </div>
-                                <div class="friend-details">
-                                    <div class="friend-name ${unreadClass}">@${friend.username}</div>
-                                    <span class="friend-last-msg ${unreadClass}">${escapeHtml(lastMsgText)}</span>
-                                </div>
-                            </div>
-                            <div class="friend-meta-right">
-                                ${badgeHtml}
-                            </div>
-                        `;
                     }
-                } else {
-                    friendListEl.innerHTML = `<li class="no-friends">No active chats. Search above to add friends!</li>`;
-                }
-            } catch (err) {
-                if (isFirstLoad) {
-                    friendListEl.innerHTML = `<li class="no-friends">Failed to load chats.</li>`;
-                }
+                } catch (e) {}
+
+                const existingItem = document.createElement('li');
+                existingItem.className = 'friend-item';
+                existingItem.onclick = async () => {
+                    try {
+                        await fetch('/api/mark-read', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ user: currentUsername, friend: friend.username })
+                        });
+                    } catch(err){}
+                    window.location.href = `/chat?friend=${encodeURIComponent(friend.username)}`;
+                };
+
+                const unreadClass = unreadCount > 0 ? 'unread' : '';
+                // Renders a bright red bubble if unreadCount > 0, otherwise shows "Chat"
+                const badgeHtml = unreadCount > 0 
+                    ? `<div class="unread-badge">${unreadCount}</div>` 
+                    : `<div class="message-action">Chat</div>`;
+
+                existingItem.innerHTML = `
+                    <div class="friend-info">
+                        <div class="friend-avatar-wrapper">
+                            <div class="friend-avatar">${friend.username.charAt(0).toUpperCase()}</div>
+                            <div class="status-dot"></div>
+                        </div>
+                        <div class="friend-details">
+                            <div class="friend-name ${unreadClass}">@${friend.username}</div>
+                            <span class="friend-last-msg ${unreadClass}">${escapeHtml(lastMsgText)}</span>
+                        </div>
+                    </div>
+                    <div class="friend-meta-right">
+                        ${badgeHtml}
+                    </div>
+                `;
+                friendListEl.appendChild(existingItem);
             }
+        } else {
+            friendListEl.innerHTML = `<li class="no-friends">No active chats. Search above to add friends!</li>`;
         }
+    } catch (err) {
+        friendListEl.innerHTML = `<li class="no-friends">Failed to load chats.</li>`;
+    }
+}
+
+        
 
         function escapeHtml(text) {
             if (!text) return '';
