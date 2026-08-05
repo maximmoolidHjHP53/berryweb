@@ -2,32 +2,27 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
-const fs = require('fs');
+const mongoose = require('mongoose');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-    cors: { origin: "*" }
-});
+const io = new Server(server, { cors: { origin: "*" } });
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '.')));
 
-const DB_FILE = path.join(__dirname, 'users.json');
+// Connect using the Render environment variable
+const MONGO_URI = process.env.MONGO_URI; 
 
-function getUsers() {
-    if (!fs.existsSync(DB_FILE)) return [];
-    try {
-        const data = fs.readFileSync(DB_FILE, 'utf8');
-        return JSON.parse(data);
-    } catch (err) {
-        return [];
-    }
-}
+mongoose.connect(MONGO_URI)
+    .then(() => console.log("Connected to MongoDB Atlas successfully!"))
+    .catch(err => console.error("MongoDB Connection Error:", err.message));
 
-function saveUsers(users) {
-    fs.writeFileSync(DB_FILE, JSON.stringify(users, null, 2));
-}
+const userSchema = new mongoose.Schema({
+    username: { type: String, required: true, unique: true },
+    password: { type: String, required: true }
+});
+const User = mongoose.models.User || mongoose.model('User', userSchema);
 
 // Routes
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
@@ -36,41 +31,40 @@ app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html'))
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
 app.get('/policy', (req, res) => res.sendFile(path.join(__dirname, 'policy.html')));
 
-app.post('/register', (req, res) => {
+app.post('/register', async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) {
         return res.status(400).json({ success: false, message: "All fields are required." });
     }
 
-    const users = getUsers();
-    if (users.some(user => user.username === username)) {
-        return res.status(400).json({ success: false, message: "Username is already taken!" });
-    }
-
     const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!strongPasswordRegex.test(password)) {
-        return res.status(400).json({ 
-            success: false, 
-            message: "Password must be 8+ chars with uppercase, lowercase, number & special symbol." 
-        });
+        return res.status(400).json({ success: false, message: "Password must be 8+ chars with uppercase, lowercase, number & special symbol." });
     }
 
-    users.push({ username, password });
-    saveUsers(users);
-
-    res.status(200).json({ success: true, message: "Registered successfully" });
+    try {
+        const existing = await User.findOne({ username });
+        if (existing) {
+            return res.status(400).json({ success: false, message: "Username is already taken!" });
+        }
+        await User.create({ username, password });
+        res.status(200).json({ success: true, message: "Registered successfully" });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Database server error." });
+    }
 });
 
-app.post('/login', (req, res) => {
+app.post('/login', async (req, res) => {
     const { username, password } = req.body;
-    const users = getUsers();
-    
-    const user = users.find(u => u.username === username && u.password === password);
-    if (!user) {
-        return res.status(400).json({ success: false, message: "Invalid username or password." });
+    try {
+        const user = await User.findOne({ username, password });
+        if (!user) {
+            return res.status(400).json({ success: false, message: "Invalid username or password." });
+        }
+        res.status(200).json({ success: true, message: "Logged in successfully" });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Database login error." });
     }
-
-    res.status(200).json({ success: true, message: "Logged in successfully" });
 });
 
 const PORT = process.env.PORT || 3000;
