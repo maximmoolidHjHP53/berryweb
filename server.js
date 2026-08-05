@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema({
     friends: { type: [String], default: [] },
     friendRequests: { type: [String], default: [] },
     sentRequests: { type: [String], default: [] },
-    unreadInbox: { type: Boolean, default: true }
+    unreadInbox: { type: Boolean, default: false }
 });
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 
@@ -60,32 +60,7 @@ app.post('/register', async (req, res) => {
     }
 });
 
-// --- Socket.io Real-Time Messaging & Unread Counter ---
-io.on('connection', (socket) => {
-    socket.on('join', (username) => {
-        socket.join(username);
-    });
-
-    socket.on('send_message', (data) => {
-        // data: { sender, receiver, text, image }
-        // Broadcast the message live to the receiver's room
-        io.to(data.receiver).emit('receive_message', data);
-        
-        // Also notify receiver's inbox list to update the unread badge and snippet
-        io.to(data.receiver).emit('update_inbox', {
-            sender: data.sender,
-            text: data.text || 'Sent a photo',
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        });
-    });
-
-    socket.on('typing', ({ sender, receiver, typing }) => {
-        io.to(receiver).emit('display_typing', { sender, typing });
-    });
-});
-
-
-// --- Socket.io Real-Time Messaging & Unread Counter ---
+// --- Socket.io Real-Time Messaging, Unread Counter & Typing ---
 io.on('connection', (socket) => {
     socket.on('join', (username) => {
         socket.join(username);
@@ -132,7 +107,51 @@ io.on('connection', (socket) => {
     });
 });
 
+// --- Socket.io Real-Time Messaging, Unread Counter & Typing ---
+io.on('connection', (socket) => {
+    socket.on('join', (username) => {
+        socket.join(username);
+    });
 
+    socket.on('send_message', async (data) => {
+        try {
+            const newMessage = new Message({
+                sender: data.sender,
+                receiver: data.receiver,
+                text: data.text || '',
+                image: data.image || '',
+                read: false,
+                createdAt: new Date()
+            });
+            await newMessage.save();
+
+            const formattedTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            // Broadcast message live to receiver
+            io.to(data.receiver).emit('receive_message', {
+                sender: data.sender,
+                receiver: data.receiver,
+                text: data.text,
+                image: data.image,
+                time: formattedTime,
+                read: false
+            });
+            
+            // Notify receiver inbox update
+            io.to(data.receiver).emit('update_inbox', {
+                sender: data.sender,
+                text: data.text || 'Sent a photo',
+                time: formattedTime
+            });
+        } catch (err) {
+            console.error("Socket message save error:", err.message);
+        }
+    });
+
+    socket.on('typing', ({ sender, receiver, typing }) => {
+        io.to(receiver).emit('display_typing', { sender, typing });
+    });
+});
 
 
 app.post('/login', async (req, res) => {
