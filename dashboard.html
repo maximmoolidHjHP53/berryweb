@@ -38,7 +38,6 @@
             padding-bottom: 20px;
         }
 
-        /* Top Header with Logo */
         .app-header {
             padding: 16px 20px;
             display: flex;
@@ -58,7 +57,6 @@
             letter-spacing: 1px;
         }
 
-        /* General Card Design */
         .card {
             background-color: var(--card-bg);
             border-radius: 16px;
@@ -77,7 +75,6 @@
             font-weight: 700;
         }
 
-        /* Profile Section */
         .profile-card {
             display: flex;
             align-items: center;
@@ -160,7 +157,6 @@
             opacity: 0.7;
         }
 
-        /* Search Section */
         .search-wrapper {
             position: relative;
         }
@@ -182,7 +178,7 @@
             border-color: var(--accent-green);
         }
 
-        /* Fixed: Live Search Results Dropdown (Completely hidden by default) */
+        /* LIVE SEARCH RESULTS DROPDOWN */
         .search-results {
             position: absolute;
             top: 100%;
@@ -194,7 +190,7 @@
             margin-top: 6px;
             max-height: 180px;
             overflow-y: auto;
-            display: none;
+            display: none; /* Hidden by default */
             z-index: 50;
             box-shadow: 0 10px 30px rgba(0,0,0,0.6);
         }
@@ -233,7 +229,6 @@
             cursor: default;
         }
 
-        /* Friend List Section */
         .friend-list {
             list-style: none;
             padding: 0;
@@ -330,7 +325,7 @@
         <div class="card">
             <div class="card-title">Find Users</div>
             <div class="search-wrapper">
-                <input type="text" id="searchInput" class="search-input" placeholder="Search username..." autocomplete="off">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search username..." autocomplete="new-password" name="no-autocomplete-search" readonly onfocus="this.removeAttribute('readonly');">
                 <div id="searchResults" class="search-results"></div>
             </div>
         </div>
@@ -357,14 +352,13 @@
             window.location.href = '/login';
         }
 
-        // Live Search Handler
         const searchInput = document.getElementById('searchInput');
         const searchResults = document.getElementById('searchResults');
 
         searchInput.addEventListener('input', async (e) => {
             const query = e.target.value.trim();
 
-            // FIX: Completely hide dropdown if input box is empty
+            // STRICT FIX: If search box is empty, completely hide dropdown
             if (query.length === 0) {
                 searchResults.style.display = 'none';
                 searchResults.innerHTML = '';
