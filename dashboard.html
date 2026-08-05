@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-< lang="en">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -421,9 +421,9 @@
             opacity: 0;
             visibility: hidden;
             transition: var(--transition-smooth);
-        }
+          }
 
-        .modal-overlay.active {
+          .modal-overlay.active {
             opacity: 1;
             visibility: visible;
         }
@@ -542,7 +542,8 @@
     </style>
 </head>
 <body>
-  <div class="app-container">
+
+    <div class="app-container">
         <div class="sidebar">
             <div class="sidebar-header">
                 <div class="user-profile-preview" onclick="navigateToProfile()" title="View Profile">
@@ -612,12 +613,17 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const currentUser = localStorage.getItem('berry_user');
+        // FIXED BUG: Support both localStorage keys to completely eliminate redirection bugs
+        const currentUser = localStorage.getItem('berry_user') || localStorage.getItem('username');
+        
         if (!currentUser) {
             window.location.href = '/login';
+        } else {
+            // Keep keys synchronized so other pages don't get out of sync
+            localStorage.setItem('berry_user', currentUser);
         }
 
-        // Initialize UI Elements
+        // Initialize UI Elements safely
         document.getElementById('displayUsername').textContent = currentUser;
         document.getElementById('userInitial').textContent = currentUser.charAt(0).toUpperCase();
 
@@ -725,7 +731,7 @@
             logoutModalOverlay.classList.add('active');
         });
 
-        modalStayBtn.addEventListener('click', (e) => {
+         modalStayBtn.addEventListener('click', (e) => {
             const btnSpan = modalStayBtn.querySelector('span');
             btnSpan.innerHTML = `<span class="spinner"></span>`;
             setTimeout(() => {
@@ -741,6 +747,7 @@
             // Simulate 1 minute offline transition timer simulation before clearing session storage
             setTimeout(() => {
                 localStorage.removeItem('berry_user');
+                localStorage.removeItem('username');
                 localStorage.removeItem('berry_active_chat');
                 window.location.href = '/login';
             }, 600);
