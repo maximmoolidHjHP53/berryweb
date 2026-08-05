@@ -6,208 +6,158 @@
     <title>Berryweb - Profile</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --bg-primary: #0e1621;
-            --bg-secondary: #17212b;
-            --bg-tertiary: #242f3d;
-            --accent-green: #2fa572;
-            --accent-green-hover: #23855a;
-            --text-main: #f5f5f5;
-            --text-muted: #8a96a3;
-            --border-glass: rgba(255, 255, 255, 0.08);
-            --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        
         body {
-            background-color: var(--bg-primary);
-            color: var(--text-main);
-            min-height: 100vh;
+            background-color: #0f1117;
+            color: #ffffff;
             padding: 20px;
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
-
         .profile-container {
-            max-width: 500px;
             width: 100%;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-glass);
+            max-width: 420px;
+            background: #1e222d;
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            position: relative;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
         }
-
-        .back-nav {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-glass);
-            color: var(--text-main);
-            padding: 8px 12px;
-            border-radius: 10px;
-            text-decoration: none;
-            font-size: 0.85rem;
+        .nav-back {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            transition: var(--transition-smooth);
+            gap: 8px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            background: #252a37;
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
         }
-
-        .back-nav:hover { background: var(--border-glass); }
-
-        .profile-header-section {
+        .nav-back:hover {
+            color: #fff;
+            background: #2b3243;
+        }
+        .avatar-section {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-top: 20px;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
-
-        /* Profile Avatar Container with Click to Upload */
-        .profile-avatar-container {
-            width: 100px;
-            height: 100px;
+        .avatar-box {
+            width: 90px;
+            height: 90px;
             border-radius: 50%;
-            background: var(--accent-green);
+            background: #22c55e;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.5rem;
+            font-size: 36px;
             font-weight: bold;
             color: white;
             position: relative;
-            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
             overflow: hidden;
-            border: 3px solid var(--border-glass);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            transition: var(--transition-smooth);
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 12px;
         }
-
-        .profile-avatar-container:hover {
-            transform: scale(1.03);
-            border-color: var(--accent-green);
-        }
-
-        .profile-avatar-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .upload-overlay-icon {
-            position: absolute;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.6);
-            width: 100%;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.8rem;
-            color: white;
-        }
-
         .username-title {
-            font-size: 1.4rem;
+            font-size: 22px;
             font-weight: 700;
-            margin-top: 14px;
+            margin-bottom: 4px;
         }
-
-        .membership-badge {
-            background: rgba(47, 165, 114, 0.15);
-            color: var(--accent-green);
-            padding: 4px 12px;
+        .badge {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 4px 10px;
             border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            margin-top: 6px;
-            border: 1px solid rgba(47, 165, 114, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
-
-        /* Info Cards */
         .info-card {
-            background: var(--bg-primary);
-            border: 1px solid var(--border-glass);
+            background: #252a37;
             border-radius: 14px;
-            padding: 16px;
-            margin-bottom: 16px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
         }
-
         .info-label {
-            font-size: 0.75rem;
-            color: var(--text-muted);
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 6px;
         }
-
-        .info-value {
-            font-size: 0.95rem;
-            color: var(--text-main);
-            word-break: break-word;
-        }
-
         .bio-input {
             width: 100%;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-glass);
+            background: #1e222d;
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 10px;
-            padding: 10px;
-            color: var(--text-main);
-            font-size: 0.9rem;
+            padding: 12px;
+            color: white;
+            font-size: 14px;
             resize: none;
             outline: none;
-            margin-top: 4px;
         }
-        .bio-input:focus { border-color: var(--accent-green); }
-
+        .bio-input:focus {
+            border-color: #22c55e;
+        }
+        .info-value {
+            font-size: 15px;
+            font-weight: 500;
+            color: #ffffff;
+        }
         .btn {
-            background: var(--accent-green);
+            width: 100%;
+            background: #22c55e;
             color: white;
             border: none;
-            padding: 12px;
+            padding: 13px;
             border-radius: 12px;
-            font-weight: 600;
+            font-size: 15px;
+            font-weight: bold;
             cursor: pointer;
-            width: 100%;
-            transition: var(--transition-smooth);
-            font-size: 0.95rem;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            margin-top: 10px;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
         }
-
-        .btn:hover { background: var(--accent-green-hover); }
-
-        #fileInput { display: none; }
+        .btn:hover {
+            background: #16a34a;
+        }
     </style>
 </head>
 <body>
 
     <div class="profile-container">
-        <a href="/dashboard" class="back-nav"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
-
-        <div class="profile-header-section">
-            <div class="profile-avatar-container" id="profileAvatarBox" onclick="document.getElementById('fileInput').click()" title="Click to change profile picture">
+        <a href="/dashboard" class="nav-back"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
+        
+        <div class="avatar-section">
+            <div class="avatar-box" id="profileAvatarBox">
                 <span id="profileInitial">U</span>
-                <div class="upload-overlay-icon"><i class="fa-solid fa-camera"></i></div>
             </div>
-            <input type="file" id="fileInput" accept="image/*" autocomplete="off" onchange="handleImageUpload(event)">
-
-            <div class="username-title" id="profileUsername">Username</div>
-            <div class="membership-badge"><i class="fa-solid fa-shield-halved"></i> Active Member</div>
+            <h2 class="username-title" id="profileUsername">Username</h2>
+            <span class="badge"><i class="fa-solid fa-shield-halved"></i> Active Member</span>
         </div>
 
         <div class="info-card">
             <div class="info-label"><i class="fa-solid fa-circle-info"></i> About / Bio</div>
-            <textarea id="aboutInput" class="bio-input" rows="2" placeholder="Write something about yourself..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="no_autofill_about">Hello! I am using Berryweb.</textarea>
+            <textarea id="aboutInput" class="bio-input" rows="3" placeholder="Write something about yourself...">Hello! I am using Berryweb.</textarea>
         </div>
 
         <div class="info-card">
@@ -218,128 +168,52 @@
         <button class="btn" onclick="saveProfile()"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script>
-
-const socket = io();
-const currentUser = localStorage.getItem('berry_user') || localStorage.getItem('username');
-
-// Save Profile changes with a clean modern success alert
-document.getElementById('profileForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const bio = document.getElementById('bioInput').value;
-    const avatar = document.getElementById('avatarInput').value; // or base64 image data string
-
-    socket.emit('update_profile', { username: currentUser, bio, avatar });
-    
-    // Save locally for instant rendering
-    if (avatar) localStorage.setItem('berry_avatar', avatar);
-
-    // Custom Success Popup Dialog
-    showSuccessPopup("Profile updated and saved successfully!");
-});
-
-function showSuccessPopup(message) {
-    const existing = document.getElementById('successPopupModal');
-    if (existing) existing.remove();
-
-    const modal = document.createElement('div');
-    modal.id = 'successPopupModal';
-    modal.className = 'modal-backdrop active';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <div style="font-size: 36px; margin-bottom: 10px;">🎉</div>
-            <h3 style="margin-bottom: 10px;">Success</h3>
-            <p style="color: #94a3b8; margin-bottom: 20px;">${message}</p>
-            <button onclick="document.getElementById('successPopupModal').classList.remove('active'); window.location.href='/dashboard';" style="width: 100%; padding: 10px; background: #22c55e; border: none; color: white; border-radius: 8px; font-weight: bold; cursor: pointer;">OK</button>
-        </div>
-    `;
-    document.body.appendChild(modal);
-}
-
-      
+        const socket = io();
         const currentUser = localStorage.getItem('username') || localStorage.getItem('berry_user');
-        if (!currentUser) window.location.href = '/login';
 
-        document.getElementById('profileUsername').textContent = currentUser;
-
-        // Load Registration Date (stored when created or initialized now)
-        let regDateKey = 'reg_date_' + currentUser;
-        let storedRegDate = localStorage.getItem(regDateKey);
-        if (!storedRegDate) {
-            storedRegDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-            localStorage.setItem(regDateKey, storedRegDate);
-        }
-        document.getElementById('regDate').textContent = storedRegDate;
-
-        // Load Bio / About
-        let bioKey = 'bio_' + currentUser;
-        let storedBio = localStorage.getItem(bioKey);
-        if (storedBio) {
-            document.getElementById('aboutInput').value = storedBio;
-        }
-
-        // Load Avatar
-        const avatarKey = 'avatar_' + currentUser;
-        let storedAvatar = localStorage.getItem(avatarKey);
-        const avatarBox = document.getElementById('profileAvatarBox');
-
-        if (storedAvatar) {
-            avatarBox.innerHTML = `<img src="${storedAvatar}" alt="Profile"> <div class="upload-overlay-icon"><i class="fa-solid fa-camera"></i></div>`;
+        if (!currentUser) {
+            window.location.href = '/login';
         } else {
-            document.getElementById('profileInitial').textContent = currentUser.charAt(0).toUpperCase();
+            const usernameEl = document.getElementById('profileUsername');
+            if (usernameEl) usernameEl.textContent = currentUser;
+            const initialEl = document.getElementById('profileInitial');
+            if (initialEl) initialEl.textContent = currentUser.charAt(0).toUpperCase();
         }
 
-        // Handle image selection, crop/resize via canvas, and save
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+        // Fetch user profile data from server on load
+        socket.emit('get_user_data', currentUser);
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    // Resize/Compress image cleanly for web storage & speed
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 300;
-                    const MAX_HEIGHT = 300;
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > height) {
-                        if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                            width = MAX_WIDTH;
-                        }
-                    } else {
-                        if (height > MAX_HEIGHT) {
-                            width *= MAX_HEIGHT / height;
-                            height = MAX_HEIGHT;
-                        }
-                    }
-
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-
-                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-                    
-                    // Display preview immediately
-                    avatarBox.innerHTML = `<img src="${compressedDataUrl}" alt="Profile"> <div class="upload-overlay-icon"><i class="fa-solid fa-camera"></i></div>`;
-                    
-                    // Save to local storage so it syncs everywhere instantly
-                    localStorage.setItem(avatarKey, compressedDataUrl);
-                }
-                img.src = e.target.result;
+        socket.on('user_data_response', (data) => {
+            if (data.bio) {
+                document.getElementById('aboutInput').value = data.bio;
             }
-            reader.readAsDataURL(file);
-        }
+            const regDateEl = document.getElementById('regDate');
+            if (regDateEl) {
+                regDateEl.textContent = data.regDate || 'August 5, 2026';
+            }
+            if (data.avatar) {
+                const avatarBox = document.getElementById('profileAvatarBox');
+                if (avatarBox) {
+                    avatarBox.innerHTML = `<img src="${data.avatar}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                }
+            }
+        });
 
         function saveProfile() {
-            const bioText = document.getElementById('aboutInput').value.trim();
-            localStorage.setItem(bioKey, bioText);
-            
-            alert('Profile updated and saved successfully!');
+            const bio = document.getElementById('aboutInput').value;
+            const avatarImg = document.querySelector('#profileAvatarBox img');
+            const avatar = avatarImg ? avatarImg.src : '';
+
+            // Emit update to server socket
+            socket.emit('update_profile', { username: currentUser, bio, avatar });
+
+            // Store locally for instant fallback
+            localStorage.setItem('bio_' + currentUser, bio);
+            if (avatar) localStorage.setItem('avatar_' + currentUser, avatar);
+
+            alert("Profile updated and saved successfully!");
             window.location.href = '/dashboard';
         }
     </script>
