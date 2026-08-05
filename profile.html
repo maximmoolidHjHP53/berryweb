@@ -146,13 +146,14 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-        const socket = io({
+        const socket = io(window.location.origin, {
+    path: '/socket.io',
     transports: ['polling', 'websocket'],
     reconnection: true,
     reconnectionAttempts: Infinity,
     reconnectionDelay: 1000
 });
-      
+
         const currentUser = localStorage.getItem('username') || localStorage.getItem('berry_user');
         let loadedImage = null;
         let imgX = 0, imgY = 0, isDragging = false, startX, startY;
