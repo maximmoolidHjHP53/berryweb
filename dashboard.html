@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -13,6 +13,18 @@
             --accent-green: #00e676;
             --hover-overlay: rgba(255, 255, 255, 0.03);
             --border-color: rgba(255, 255, 255, 0.06);
+            --modal-bg: #181818;
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-main: #111111;
+            --text-muted: #666666;
+            --accent-green: #00c853;
+            --hover-overlay: rgba(0, 0, 0, 0.04);
+            --border-color: rgba(0, 0, 0, 0.08);
+            --modal-bg: #ffffff;
         }
 
         body {
@@ -26,6 +38,7 @@
             height: 100vh;
             overflow: hidden;
             -webkit-tap-highlight-color: transparent;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         .app-container {
@@ -42,7 +55,7 @@
             padding: 16px 20px;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
             background-color: var(--bg-color);
             border-bottom: 1px solid var(--border-color);
             position: sticky;
@@ -57,13 +70,31 @@
             letter-spacing: 1px;
         }
 
+        .settings-icon-btn {
+            background: none;
+            border: none;
+            color: var(--text-main);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+        .settings-icon-btn:active {
+            background-color: var(--hover-overlay);
+        }
+
         .card {
             background-color: var(--card-bg);
             border-radius: 16px;
             margin: 14px 16px 0 16px;
             padding: 18px;
             border: 1px solid var(--border-color);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            transition: background-color 0.3s, border-color 0.3s;
         }
 
         .card-title {
@@ -94,7 +125,7 @@
         .avatar {
             width: 50px;
             height: 50px;
-            background-color: #1e1e1e;
+            background-color: var(--hover-overlay);
             color: var(--accent-green);
             font-size: 20px;
             font-weight: 700;
@@ -146,9 +177,10 @@
         }
 
         .btn-inbox {
-            background-color: #1e1e1e;
+            background-color: var(--hover-overlay);
             color: var(--text-main);
             position: relative;
+            border: 1px solid var(--border-color);
         }
 
         .inbox-badge {
@@ -163,11 +195,6 @@
             display: none;
         }
 
-        .btn-logout {
-            background-color: rgba(255, 82, 82, 0.15);
-            color: #ff5252;
-        }
-
         .btn:active {
             opacity: 0.7;
         }
@@ -179,7 +206,7 @@
         .search-input {
             width: 100%;
             padding: 12px 14px;
-            background-color: #1e1e1e;
+            background-color: var(--hover-overlay);
             border: 1px solid var(--border-color);
             border-radius: 12px;
             color: var(--text-main);
@@ -193,7 +220,7 @@
             top: 100%;
             left: 0;
             right: 0;
-            background-color: #1e1e1e;
+            background-color: var(--modal-bg);
             border: 1px solid var(--border-color);
             border-radius: 12px;
             margin-top: 6px;
@@ -201,7 +228,7 @@
             overflow-y: auto;
             display: none;
             z-index: 50;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
         }
 
         .search-result-item {
@@ -229,8 +256,8 @@
         }
         
         .add-btn.pending {
-            background-color: #262626;
-            color: #888;
+            background-color: var(--hover-overlay);
+            color: var(--text-muted);
             cursor: default;
         }
 
@@ -269,7 +296,7 @@
         .friend-avatar {
             width: 42px;
             height: 42px;
-            background-color: #1e1e1e;
+            background-color: var(--hover-overlay);
             color: var(--accent-green);
             font-size: 14px;
             font-weight: 700;
@@ -278,6 +305,7 @@
             justify-content: center;
             border-radius: 50%;
             text-transform: uppercase;
+            border: 1px solid var(--border-color);
         }
 
         .friend-details {
@@ -292,7 +320,7 @@
         }
 
         .friend-name.unread {
-            color: #ffffff;
+            color: var(--text-main);
             font-weight: 800;
         }
 
@@ -319,7 +347,6 @@
             flex-shrink: 0;
         }
 
-        /* Bright Red Notification Badge */
         .unread-badge {
             background-color: #ff3b30 !important;
             color: #ffffff !important;
@@ -329,7 +356,7 @@
             border-radius: 12px;
             min-width: 18px;
             text-align: center;
-            box-shadow: 0 2px 6px rgba(255, 59, 48, 0.6);
+            box-shadow: 0 2px 6px rgba(255, 59, 48, 0.4);
             display: inline-block;
         }
 
@@ -345,6 +372,132 @@
             text-align: center;
             padding: 24px 0;
         }
+
+        /* --- MODAL STYLES WITH HOVER/OPEN TRANSITIONS --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-box {
+            background-color: var(--modal-bg);
+            width: 100%;
+            max-width: 380px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+        }
+
+        .modal-overlay.active .modal-box {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .settings-option-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .settings-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 14px;
+            background-color: var(--hover-overlay);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+            transition: background-color 0.2s;
+        }
+
+        .settings-item:hover {
+            background-color: rgba(255,255,255,0.07);
+        }
+
+        .settings-item-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .settings-item-left span {
+            font-size: 16px;
+        }
+
+        .logout-btn-item {
+            color: #ff5252;
+            border-color: rgba(255, 82, 82, 0.2);
+            background-color: rgba(255, 82, 82, 0.05);
+        }
+
+        .logout-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .logout-action-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            text-align: center;
+        }
+
+        .btn-confirm-logout {
+            background-color: #ff3b30;
+            color: white;
+        }
+
+        .btn-stay-on {
+            background-color: var(--hover-overlay);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
     </style>
 </head>
 <body>
@@ -352,6 +505,7 @@
     <div class="app-container">
         <header class="app-header">
             <div class="logo-text">BERRYWEB</div>
+            <button class="settings-icon-btn" onclick="openSettingsModal()" title="Settings">⚙️</button>
         </header>
 
         <div class="card profile-card">
@@ -362,7 +516,7 @@
                 </div>
                 <div class="user-details">
                     <h3 id="usernameDisplay">User</h3>
-                    <div class="view-profile" onclick="alert('Profile settings coming soon!')">View Profile</div>
+                    <div class="view-profile" onclick="openSettingsModal()">View Profile</div>
                 </div>
             </div>
             <div class="action-buttons">
@@ -370,10 +524,8 @@
                     Inbox
                     <span id="inboxBadge" class="inbox-badge">0</span>
                 </button>
-                <button class="btn btn-logout" onclick="logout()">Log Out</button>
             </div>
         </div>
-
         <div class="card">
             <div class="card-title">Find Users</div>
             <div class="search-wrapper">
@@ -390,6 +542,49 @@
         </div>
     </div>
 
+    <div id="settingsModal" class="modal-overlay" onclick="handleModalBackdrop(event, 'settingsModal')">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title">Settings</div>
+                <button class="modal-close" onclick="closeSettingsModal()">&times;</button>
+            </div>
+            <div class="settings-option-list">
+                <div class="settings-item" onclick="alert('Profile Username: ' + currentUsername)">
+                    <div class="settings-item-left"><span>👤</span> Profile</div>
+                    <span style="color:var(--text-muted); font-size:12px;">View</span>
+                </div>
+                <div class="settings-item" onclick="toggleTheme()">
+                    <div class="settings-item-left"><span>🌓</span> Theme Mode</div>
+                    <span id="themeLabel" style="color:var(--accent-green); font-size:12px;">Dark / Light</span>
+                </div>
+                <div class="settings-item" onclick="clearLocalCache()">
+                    <div class="settings-item-left"><span>🧹</span> Clear Space</div>
+                    <span style="color:var(--text-muted); font-size:12px;">Reset</span>
+                </div>
+                <div class="settings-item" onclick="alert('BerryWeb v2.5 - Early Access Enabled')">
+                    <div class="settings-item-left"><span>🚀</span> Early Access</div>
+                    <span style="color:var(--accent-green); font-size:12px;">Active</span>
+                </div>
+                <div class="settings-item logout-btn-item" onclick="openLogoutModal()">
+                    <div class="settings-item-left"><span>🚪</span> Log Out</div>
+                    <span>›</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="logoutModal" class="modal-overlay" onclick="handleModalBackdrop(event, 'logoutModal')">
+        <div class="modal-box" style="text-align: center;">
+            <div style="font-size: 36px; margin-bottom: 10px;">⚠️</div>
+            <div class="modal-title" style="margin-bottom: 8px;">Log Out of BerryWeb?</div>
+            <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 24px;">Are you sure you want to end your active session on this device?</div>
+            <div class="logout-actions">
+                <button class="logout-action-btn btn-stay-on" onclick="closeLogoutModal()">Stay On</button>
+                <button class="logout-action-btn btn-confirm-logout" onclick="executeLogout()">Log Out</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // --- Permanent Security & Session Guard ---
         let currentUsername = localStorage.getItem('berry_session_user') || localStorage.getItem('username');
@@ -400,7 +595,6 @@
             localStorage.setItem('berry_session_user', currentUsername);
             localStorage.setItem('username', currentUsername);
 
-            // Intercept browser back button to lock session securely
             history.pushState(null, null, window.location.href);
             window.addEventListener('popstate', function () {
                 history.pushState(null, null, window.location.href);
@@ -410,12 +604,53 @@
             document.getElementById('userAvatar').textContent = currentUsername.charAt(0).toUpperCase();
         }
 
-        function logout() {
+        // --- Theme Handler ---
+        const savedTheme = localStorage.getItem('berry_theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        document.getElementById('themeLabel').textContent = savedTheme === 'dark' ? 'Dark Mode' : 'Light Mode';
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('berry_theme', newTheme);
+            document.getElementById('themeLabel').textContent = newTheme === 'dark' ? 'Dark Mode' : 'Light Mode';
+        }
+
+        function clearLocalCache() {
+            localStorage.removeItem('berry_search_cache');
+            alert('Local space cleared successfully!');
+            closeSettingsModal();
+        }
+
+        // --- Modal Transitions ---
+        function openSettingsModal() {
+            document.getElementById('settingsModal').classList.add('active');
+        }
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+        function openLogoutModal() {
+            closeSettingsModal();
+            document.getElementById('logoutModal').classList.add('active');
+        }
+        function closeLogoutModal() {
+            document.getElementById('logoutModal').classList.remove('active');
+            openSettingsModal(); // Returns back to settings box smoothly as requested
+        }
+        function handleModalBackdrop(event, modalId) {
+            if (event.target.id === modalId) {
+                document.getElementById(modalId).classList.remove('active');
+            }
+        }
+
+        function executeLogout() {
             localStorage.clear();
             sessionStorage.clear();
             window.location.replace('/login');
         }
 
+        // --- Live Search Bar Fixed Behavior ---
         const searchInput = document.getElementById('searchInput');
         const searchResults = document.getElementById('searchResults');
 
@@ -428,7 +663,7 @@
             }
 
             try {
-                const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&user=${encodeURIComponent(currentUsername)}`);
+              const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&user=${encodeURIComponent(currentUsername)}`);
                 const data = await res.json();
 
                 searchResults.innerHTML = '';
@@ -452,9 +687,16 @@
                     });
                 } else {
                     searchResults.style.display = 'block';
-                    searchResults.innerHTML = `<div style="padding:14px; color:#888; font-size:13px; text-align:center;">No users found</div>`;
+                    searchResults.innerHTML = `<div style="padding:14px; color:var(--text-muted); font-size:13px; text-align:center;">No users found</div>`;
                 }
             } catch (err) {
+                searchResults.style.display = 'none';
+            }
+        });
+
+        // Hide search dropdown cleanly when clicking anywhere outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
                 searchResults.style.display = 'none';
             }
         });
@@ -521,7 +763,7 @@
 
                         let existingItem = document.getElementById(`friend-row-${friend.username}`);
 
-                        // Silently update existing DOM elements without destroying them (No Flickering!)
+                        // Silently update DOM nodes without clearing list (Zero Flickering!)
                         if (existingItem) {
                             const nameEl = existingItem.querySelector('.friend-name');
                             const msgEl = existingItem.querySelector('.friend-last-msg');
@@ -538,7 +780,6 @@
                                 metaEl.innerHTML = badgeHtml;
                             }
                         } else {
-                            // Build the item once if it doesn't exist
                             existingItem = document.createElement('li');
                             existingItem.className = 'friend-item';
                             existingItem.id = `friend-row-${friend.username}`;
@@ -570,8 +811,7 @@
                             `;
                             friendListEl.appendChild(existingItem);
                         }
-
-                      }
+                    }
                     isInitialLoaded = true;
                 } else if (!isInitialLoaded) {
                     friendListEl.innerHTML = `<li class="no-friends">No active chats. Search above to add friends!</li>`;
