@@ -585,8 +585,15 @@
         </div>
     </div>
 
-  <script src="/socket.io/socket.io.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <script>
+         // --- Ironclad Registration Guard: Prevent visiting register if already logged in ---
+const activeUser = localStorage.getItem('berry_session_user') || localStorage.getItem('username');
+if (activeUser) {
+    window.location.replace('/dashboard');
+}
+
+     
         // --- Permanent Security & Session Guard ---
         let currentUsername = localStorage.getItem('berry_session_user') || localStorage.getItem('username');
         
@@ -604,6 +611,10 @@
             document.getElementById('usernameDisplay').textContent = currentUsername;
             document.getElementById('userAvatar').textContent = currentUsername.charAt(0).toUpperCase();
         }
+
+        // --- Initialize Socket.io Connection ---
+        const socket = io();
+        socket.emit('join', currentUsername);
 
         // --- Theme Handler ---
         const savedTheme = localStorage.getItem('berry_theme') || 'dark';
@@ -664,7 +675,7 @@
             }
 
             try {
-              const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&user=${encodeURIComponent(currentUsername)}`);
+                const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&user=${encodeURIComponent(currentUsername)}`);
                 const data = await res.json();
 
                 searchResults.innerHTML = '';
@@ -716,9 +727,9 @@
                     btnElement.disabled = true;
                 }
             } catch (err) {}
-        }
+      }
 
-        let isInitialLoaded = false;
+      let isInitialLoaded = false;
 
         // --- Flicker-Free Silent Background Friend & Unread Poller ---
         async function loadFriends() {
@@ -840,7 +851,18 @@
             } catch (err) {}
         }
 
-        // Run immediately and poll silently every 3 seconds
+        // --- Real-Time Socket Event Listeners ---
+        socket.on('update_inbox', (data) => {
+            loadFriends();
+            checkInboxCount();
+        });
+
+        socket.on('receive_message', (data) => {
+            loadFriends();
+            checkInboxCount();
+        });
+
+        // Run immediately and poll silently every 3 seconds as backup
         loadFriends();
         checkInboxCount();
         setInterval(() => {
