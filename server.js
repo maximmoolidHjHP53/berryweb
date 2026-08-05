@@ -10,7 +10,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// Use Render's environment variable or fallback for local testing
 const mongoUri = process.env.MONGO_URI || "mongodb+srv://airmountcompany_db_user:1VPKvXnqbkyKT4Fh@cluster0.2dihhnv.mongodb.net/telegram_clone?retryWrites=true&w=majority&appName=Cluster0";
 let db;
 
@@ -21,13 +20,14 @@ MongoClient.connect(mongoUri)
     })
     .catch(err => console.error("Database connection error:", err));
 
-// Page Routes
+// Page Routes - Ensuring all views are properly mapped
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
 app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
 app.get('/policy', (req, res) => res.sendFile(path.join(__dirname, 'policy.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
 app.get('/chat', (req, res) => res.sendFile(path.join(__dirname, 'chat.html')));
+app.get('/profile', (req, res) => res.sendFile(path.join(__dirname, 'profile.html')));
 
 // API: Register User
 app.post('/api/register', async (req, res) => {
@@ -134,5 +134,5 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT} with MongoDB cloud storage.`);
+    console.log(`Server running on port ${PORT} with full endpoint route mapping.`);
 });
