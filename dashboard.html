@@ -4,695 +4,220 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Berryweb - Dashboard</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --bg-primary: #0e1621;
-            --bg-secondary: #17212b;
-            --bg-tertiary: #242f3d;
-            --accent-green: #2fa572;
-            --accent-green-hover: #23855a;
-            --text-main: #f5f5f5;
-            --text-muted: #8a96a3;
-            --border-glass: rgba(255, 255, 255, 0.08);
-            --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body {
-            background-color: var(--bg-primary);
-            color: var(--text-main);
-            min-height: 100vh;
-            padding: 20px;
+            background-color: #0f1117; color: #ffffff; padding: 20px;
+            animation: fadeInPage 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; opacity: 0;
+        }
+        @keyframes fadeInPage { to { opacity: 1; } }
+
+        a, button, .friend-item, .action-btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        a:hover, button:hover { transform: translateY(-2px); }
+
+        .dashboard-container { max-width: 650px; margin: 0 auto; }
+
+        .user-header-card {
+            background: #1e222d; border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 20px; border-radius: 16px; display: flex; align-items: center;
+            justify-content: space-between; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        .user-info-left { display: flex; align-items: center; gap: 15px; }
+
+        .avatar-container {
+            width: 55px; height: 55px; border-radius: 50%; background: #22c55e;
+            display: flex; align-items: center; justify-content: center; font-weight: bold;
+            font-size: 22px; overflow: hidden; color: #fff; position: relative;
+        }
+        .avatar-container img { width: 100%; height: 100%; object-fit: cover; }
+
+        .user-details h2 { font-size: 19px; margin-bottom: 3px; }
+        .user-details a { font-size: 13px; color: #22c55e; text-decoration: none; font-weight: 500; }
+        .user-details a:hover { text-decoration: underline; }
+
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+        .action-btn {
+            background: #2b3140; color: white; border: none; padding: 9px 15px;
+            border-radius: 10px; font-size: 13px; cursor: pointer; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 6px; font-weight: 600;
+        }
+        .action-btn.logout-btn { background: #ef4444; }
+
+        .friends-card {
+            background: #1e222d; border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+        .friends-card h3 { font-size: 15px; margin-bottom: 15px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .friend-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 15px; background: #252a37; border-radius: 12px; margin-bottom: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .friend-info { display: flex; align-items: center; gap: 12px; }
+
+        .status-indicator { width: 11px; height: 11px; border-radius: 50%; display: inline-block; border: 2px solid #252a37; }
+        .status-online { background-color: #22c55e; box-shadow: 0 0 8px rgba(34, 197, 94, 0.7); }
+        .status-offline { background-color: #64748b; }
+
+        /* Friend Chat Button with Corner Unread Badge */
+        .chat-btn-wrapper { position: relative; display: inline-block; }
+        .chat-icon-btn {
+            background: #22c55e; color: white; border: none; padding: 7px 14px;
+            border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: bold; text-decoration: none;
+            display: inline-block;
+        }
+        .chat-icon-btn:hover { background: #16a34a; }
+
+        .friend-unread-badge {
+            background-color: #ef4444; color: white; font-size: 10px; font-weight: bold;
+            padding: 2px 6px; border-radius: 10px; position: absolute; top: -8px; right: -8px;
+            box-shadow: 0 2px 5px rgba(239, 68, 68, 0.5);
         }
 
-        .dashboard-container {
-            max-width: 800px;
-            margin: 0 auto;
+        /* Logout Confirmation Modal Animation */
+        .modal-backdrop {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(5px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
         }
-
-        .header-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-glass);
-            padding: 16px 20px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        .modal-backdrop.active { opacity: 1; pointer-events: auto; }
+        .modal-content {
+            background: #1e222d; border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 28px; border-radius: 18px; width: 90%; max-width: 380px;
+            text-align: center; transform: scale(0.75); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
         }
-
-        .profile-trigger {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            text-decoration: none;
-            color: var(--text-main);
-            transition: var(--transition-smooth);
-        }
-
-        .profile-trigger:hover { opacity: 0.85; }
-
-        .profile-avatar-header {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: var(--accent-green);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: white;
-            font-size: 1.1rem;
-            overflow: hidden;
-            border: 2px solid var(--border-glass);
-        }
-
-        .profile-avatar-header img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .profile-info-text {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .profile-name-label {
-            font-weight: 600;
-            font-size: 1rem;
-        }
-
-        .profile-sub-label {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-        }
-
-        .nav-btns { display: flex; gap: 10px; align-items: center; }
-
-        .btn {
-            background: var(--accent-green);
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition-smooth);
-            text-decoration: none;
-            font-size: 0.9rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .btn:hover { background: var(--accent-green-hover); }
-        .btn-danger { background: #eb5757; }
-        .btn-danger:hover { background: #d33b3b; }
-
-        .btn-muted {
-            background: var(--bg-tertiary);
-            color: var(--text-muted);
-            cursor: default;
-        }
-        .btn-muted:hover { background: var(--bg-tertiary); }
-
-        .inbox-btn {
-            position: relative;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-glass);
-            color: var(--text-main);
-        }
-        .inbox-btn:hover { background: var(--border-glass); }
-
-        .inbox-badge {
-            position: absolute;
-            top: -6px; right: -6px;
-            background: #eb5757;
-            color: white;
-            font-size: 0.7rem;
-            padding: 2px 6px;
-            border-radius: 10px;
-            font-weight: bold;
-            display: none;
-        }
-
-        .search-section {
-            margin-bottom: 20px;
-            position: relative;
-        }
-
-        .search-bar {
-            width: 100%;
-            background: var(--bg-secondary);
-            border: 1.5px solid var(--border-glass);
-            padding: 14px 18px;
-            border-radius: 14px;
-            color: var(--text-main);
-            font-size: 0.95rem;
-            outline: none;
-            transition: var(--transition-smooth);
-        }
-
-        .search-bar:focus { border-color: var(--accent-green); }
-
-        .search-results-dropdown {
-            position: absolute;
-            top: calc(100% + 8px);
-            left: 0;
-            width: 100%;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-glass);
-            padding: 16px;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-            z-index: 50;
-            display: none;
-        }
-
-        .search-results-dropdown h3 {
-            font-size: 1.1rem;
-            margin-bottom: 12px;
-            border-bottom: 1px solid var(--border-glass);
-            padding-bottom: 8px;
-        }
-
-        .section-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-glass);
-            padding: 24px;
-            border-radius: 16px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-        }
-
-        .section-card h3 {
-            font-size: 1.1rem;
-            margin-bottom: 16px;
-            border-bottom: 1px solid var(--border-glass);
-            padding-bottom: 10px;
-        }
-
-        .list-container {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .list-item {
-            background: var(--bg-primary);
-            border: 1.5px solid var(--border-glass);
-            padding: 12px 16px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            transition: var(--transition-smooth);
-            cursor: pointer;
-        }
-
-        .list-item:hover { border-color: var(--accent-green); background: var(--bg-tertiary); }
-
-        .user-meta {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex: 1;
-            min-width: 0;
-        }
-
-        .avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--accent-green);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: white;
-            flex-shrink: 0;
-            overflow: hidden;
-        }
-
-        .avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .user-details { flex: 1; min-width: 0; }
-        .username-text { font-weight: 600; font-size: 0.95rem; margin-bottom: 2px; }
-        .message-preview { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .friend-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-
-        .unread-badge {
-            background: var(--accent-green);
-            color: white;
-            font-size: 0.75rem;
-            font-weight: 700;
-            padding: 2px 8px;
-            border-radius: 12px;
-            display: none;
-        }
-
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(4px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            padding: 20px;
-        }
-
-        .modal-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-glass);
-            width: 100%;
-            max-width: 450px;
-            border-radius: 20px;
-            padding: 24px;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            border-bottom: 1px solid var(--border-glass);
-            padding-bottom: 10px;
-        }
-
-        .close-modal { background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; }
-
-      /* Smooth Page Entry Transition */
-        body {
-    animation: fadeInPage 0.4s ease-in-out forwards;
-    opacity: 0;
-}
-        @keyframes fadeInPage {
-    to { opacity: 1; }
-}
-
-      /* Hover transition effect for navigational buttons/links */
-        a, button, .auth-btn, .dashboard-card {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        a:hover, button:hover {
-        transform: translateY(-2px);
-        }
-
-      /* Online Indicator Dot */
-        .status-indicator {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        display: inline-block;
-        border: 2px solid #1a1d24;
-        }
-       .status-online { background-color: #22c55e; box-shadow: 0 0 8px rgba(34, 197, 94, 0.6); }
-       .status-offline { background-color: #94a3b8;        }
-
-      /* Unread Badge Notification */
-       .unread-badge {
-       background-color: #ef4444;
-       color: white;
-       font-size: 11px;
-       font-weight: bold;
-       padding: 2px 6px;
-       border-radius: 10px;
-       position: absolute;
-       top: -5px;
-       right: -5px;
-       box-shadow: 0 2px 6px rgba(239, 68, 68, 0.5);
-       }
-
-      /* Custom Modal Backdrop & Dialog Animation */
-       .modal-backdrop {
-       position: fixed;
-       top: 0; left: 0; width: 100%; height: 100%;
-       background: rgba(0, 0, 0, 0.6);
-       backdrop-filter: blur(5px);
-       display: flex;
-       justify-content: center;
-       align-items: center;
-       z-index: 9999;
-       opacity: 0;
-       pointer-events: none;
-       transition: opacity 0.3s ease;
-       }
-       .modal-backdrop.active {
-       opacity: 1;
-       pointer-events: auto;
-       }
-      .modal-content {
-       background: #1e222d;
-       border: 1px solid rgba(255, 255, 255, 0.1);
-       padding: 25px;
-       border-radius: 16px;
-       width: 90%;
-       max-width: 380px;
-       text-align: center;
-       transform: scale(0.8);
-       transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-       color: #fff;
-       }
-       .modal-backdrop.active .modal-content {
-       transform: scale(1);
-       }
-      
+        .modal-backdrop.active .modal-content { transform: scale(1); }
     </style>
 </head>
 <body>
 
     <div class="dashboard-container">
-        <div class="header-card">
-            <a href="/profile" class="profile-trigger">
-                <div class="profile-avatar-header" id="headerAvatarContainer">
+        <div class="user-header-card">
+            <div class="user-info-left">
+                <div class="avatar-container" id="headerAvatarContainer">
                     <span id="headerInitial">U</span>
                 </div>
-                <div class="profile-info-text">
-                    <span class="profile-name-label" id="displayUsername">User</span>
-                    <span class="profile-sub-label">View Profile</span>
+                <div class="user-details">
+                    <h2 id="displayUsername">User</h2>
+                    <a href="/profile">View Profile</a>
                 </div>
-            </a>
-            <div class="nav-btns">
-                <button class="btn inbox-btn" onclick="toggleInboxModal()">
-                    <i class="fa-solid fa-inbox"></i> Inbox
-                    <span class="inbox-badge" id="inboxBadge">0</span>
-                </button>
-                <button onclick="logout()" class="btn btn-danger" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></button>
+            </div>
+            <div class="header-actions">
+                <a href="/chat" class="action-btn">Inbox</a>
+                <button class="action-btn logout-btn" id="logoutBtn">Log Out</button>
             </div>
         </div>
 
-        <div class="search-section">
-            <input type="text" id="searchInput" class="search-bar" name="no_autofill_search" placeholder="Search @..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly');" oninput="filterList()">
-            
-            <div class="search-results-dropdown" id="searchResultCard">
-                <h3><i class="fa-solid fa-magnifying-glass"></i> Search Results</h3>
-                <div class="list-container" id="searchResultList"></div>
-            </div>
-        </div>
-
-        <div class="section-card">
-            <h3><i class="fa-solid fa-user-group"></i> My Friends</h3>
-            <div class="list-container" id="friendsList">
-                <div style="color: var(--text-muted); text-align: center; padding: 10px;">Loading friends...</div>
+        <div class="friends-card">
+            <h3>My Friends</h3>
+            <div id="friendsListContainer">
+                <p style="color: #64748b; font-size: 14px;">Loading friends...</p>
             </div>
         </div>
     </div>
 
-    <div class="modal-overlay" id="inboxModal">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h3><i class="fa-solid fa-inbox"></i> Friend Requests Inbox</h3>
-                <button class="close-modal" onclick="toggleInboxModal()"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="list-container" id="requestsList" style="max-height: 250px;">
-                <div style="color: var(--text-muted); text-align: center; padding: 10px;">No pending requests.</div>
+    <div id="logoutModal" class="modal-backdrop">
+        <div class="modal-content">
+            <h3 style="font-size: 20px; margin-bottom: 8px; color: #fff;">Sign Out</h3>
+            <p style="color: #94a3b8; font-size: 14px; margin-bottom: 20px;">Are you sure you want to log out of Berryweb?</p>
+            <div style="display: flex; gap: 12px;">
+                <button id="cancelLogout" style="flex: 1; padding: 11px; background: #334155; border: none; color: white; border-radius: 10px; font-weight: 600; cursor: pointer;">No, Stay</button>
+                <button id="confirmLogout" style="flex: 1; padding: 11px; background: #ef4444; border: none; color: white; border-radius: 10px; font-weight: 600; cursor: pointer;">Yes, Log Out</button>
             </div>
         </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-      <div id="logoutModal" class="modal-backdrop">
-    <div class="modal-content">
-        <h3>Sign Out</h3>
-        <p style="color: #94a3b8; margin: 15px 0;">Are you sure you want to log out of Berryweb?</p>
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button id="cancelLogout" style="flex: 1; padding: 10px; background: #334155; border: none; color: white; border-radius: 8px; cursor: pointer;">No, Stay</button>
-            <button id="confirmLogout" style="flex: 1; padding: 10px; background: #ef4444; border: none; color: white; border-radius: 8px; cursor: pointer;">Yes, Log Out</button>
-        </div>
-    </div>
-</div>
-
-<script src="/socket.io/socket.io.js"></script>
-<script>
-    const socket = io();
-    const currentUser = localStorage.getItem('berry_user') || localStorage.getItem('username');
-    
-    if (currentUser) {
-        socket.emit('user_online', currentUser);
-        socket.emit('get_user_data', currentUser);
-    }
-
-    // Handle Logout Modal Triggers
-    const logoutBtn = document.getElementById('logoutBtn'); // Your logout button ID
-    const logoutModal = document.getElementById('logoutModal');
-    
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            logoutModal.classList.add('active');
-        });
-    }
-
-    document.getElementById('cancelLogout').addEventListener('click', () => {
-        logoutModal.classList.remove('active');
-    });
-
-    document.getElementById('confirmLogout').addEventListener('click', () => {
-        localStorage.clear();
-        window.location.href = '/login';
-    });
-
-    // Profile sync & Avatar persistence on Dashboard
-    socket.on('user_data_response', (userData) => {
-        if (userData.avatar) {
-            const avatarEls = document.querySelectorAll('.user-avatar-img, .profile-pic-display');
-            avatarEls.forEach(el => el.src = userData.avatar);
-        }
-    });
-
-    // Unread Message Badge on Inbox/Message icon
-    socket.on('update_unread_' + currentUser, (unreadCounts) => {
-        let totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
-        let inboxIconContainer = document.querySelector('.inbox-icon-container, #inboxBtn');
-        if (inboxIconContainer) {
-            let badge = inboxIconContainer.querySelector('.unread-badge');
-            if (totalUnread > 0) {
-                if (!badge) {
-                    badge = document.createElement('span');
-                    badge.className = 'unread-badge';
-                    inboxIconContainer.style.position = 'relative';
-                    inboxIconContainer.appendChild(badge);
-                }
-                badge.innerText = totalUnread;
-            } else if (badge) {
-                badge.remove();
-            }
-        }
-    });
-</script>
-
-        // Dual Session Verification (Cookie + LocalStorage)
-        function getCookie(name) {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop().split(';').shift();
-        }
-
-        const currentUser = getCookie('berry_user') || localStorage.getItem('username') || localStorage.getItem('berry_user');
+        const currentUser = localStorage.getItem('username') || localStorage.getItem('berry_user');
         if (!currentUser) {
             window.location.href = '/login';
         } else {
-            // Keep both synchronized
-            document.cookie = `berry_user=${currentUser}; path=/; max-age=8640030`;
-            localStorage.setItem('berry_user', currentUser);
+            document.getElementById('displayUsername').textContent = currentUser;
+            document.getElementById('headerInitial').textContent = currentUser.charAt(0).toUpperCase();
         }
-
-        document.getElementById('displayUsername').textContent = currentUser;
 
         const socket = io();
+        let onlineUsersList = [];
+        let unreadDataMap = {};
 
-        function loadUserData() {
-            socket.emit('get_user_data', currentUser);
-            socket.emit('get_all_users');
-        }
+        socket.emit('user_online', currentUser);
+        socket.emit('get_user_data', currentUser);
 
-        socket.on('user_data_response', (data) => {
-            if (data.avatar) {
-                localStorage.setItem('avatar_' + currentUser, data.avatar);
-                document.getElementById('headerAvatarContainer').innerHTML = `<img src="${data.avatar}" alt="Profile">`;
-            } else {
-                document.getElementById('headerInitial').textContent = currentUser.charAt(0).toUpperCase();
+        socket.on('user_data_response', (userData) => {
+            if (userData.avatar) {
+                document.getElementById('headerAvatarContainer').innerHTML = `<img src="${userData.avatar}" alt="Avatar">`;
             }
-
-            renderFriends(data.friends || []);
-            renderRequests(data.friendRequests || []);
-            updateInboxBadge((data.friendRequests || []).length);
-            filterList();
+            if (userData.unreadCounts) {
+                unreadDataMap = userData.unreadCounts;
+            }
+            renderFriends(userData.friends || []);
         });
 
-        let cachedAllUsers = [];
-        let cachedFriends = [];
-        let cachedRequests = [];
-        let sentRequests = [];
-
-        socket.on('all_users_list', (users) => {
-            cachedAllUsers = users;
-            filterList();
+        socket.on('update_online_status', (onlineArr) => {
+            onlineUsersList = onlineArr;
+            socket.emit('get_user_data', currentUser);
         });
 
-        socket.on('refresh_friends_' + currentUser, loadUserData);
-        socket.on('refresh_requests_' + currentUser, loadUserData);
+        socket.on('update_unread_' + currentUser, (unreadCounts) => {
+            unreadDataMap = unreadCounts || {};
+            socket.emit('get_user_data', currentUser);
+        });
 
         function renderFriends(friends) {
-            cachedFriends = friends;
-            const container = document.getElementById('friendsList');
+            const container = document.getElementById('friendsListContainer');
             if (friends.length === 0) {
-                container.innerHTML = `<div style="color: var(--text-muted); text-align: center; padding: 10px;">No friends added yet.</div>`;
+                container.innerHTML = `<p style="color: #64748b; font-size: 14px;">No friends added yet.</p>`;
                 return;
             }
 
             container.innerHTML = '';
             friends.forEach(friend => {
-                const friendAvatar = localStorage.getItem('avatar_' + friend);
-                const avatarHtml = friendAvatar ? `<img src="${friendAvatar}" alt="${friend}">` : friend.charAt(0).toUpperCase();
+                const isOnline = onlineUsersList.includes(friend);
+                const statusClass = isOnline ? 'status-online' : 'status-offline';
+                const unreadCount = unreadDataMap[friend] || 0;
 
-                const div = document.createElement('div');
-                div.className = 'list-item';
-                div.onclick = () => { window.location.href = `/chat?with=${friend}`; };
-                div.innerHTML = `
-                    <div class="user-meta">
-                        <div class="avatar">${avatarHtml}</div>
-                        <div class="user-details">
-                            <div class="username-text">${friend}</div>
-                            <div class="message-preview">Tap to chat</div>
+                const item = document.createElement('div');
+                item.className = 'friend-item';
+                item.innerHTML = `
+                    <div class="friend-info">
+                        <div style="position: relative;">
+                            <div class="avatar-container" style="width: 40px; height: 40px; font-size: 16px;">${friend.charAt(0).toUpperCase()}</div>
+                            <span class="status-indicator ${statusClass}" style="position: absolute; bottom: 0; right: 0;"></span>
+                        </div>
+                        <div>
+                            <h4 style="font-size: 14px; font-weight: 600;">${friend}</h4>
+                            <span style="font-size: 11px; color: #94a3b8;">${isOnline ? 'Online' : 'Offline'}</span>
                         </div>
                     </div>
-                    <div class="friend-actions" onclick="event.stopPropagation()">
-                        <button class="btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="window.location.href='/chat?with=${friend}'"><i class="fa-solid fa-comment"></i></button>
+                    <div class="chat-btn-wrapper">
+                        <a href="/chat?to=${friend}" class="chat-icon-btn">Chat</a>
+                        ${unreadCount > 0 ? `<span class="friend-unread-badge">${unreadCount}</span>` : ''}
                     </div>
                 `;
-                container.appendChild(div);
+                container.appendChild(item);
             });
         }
 
-        function filterList() {
-            let query = document.getElementById('searchInput').value.trim();
-            const searchCard = document.getElementById('searchResultCard');
-            const searchList = document.getElementById('searchResultList');
+        // Logout Modal Confirmation Triggers
+        const logoutBtn = document.getElementById('logoutBtn');
+        const logoutModal = document.getElementById('logoutModal');
 
-            if (query.startsWith('@')) query = query.substring(1);
-            query = query.toLowerCase().trim();
+        logoutBtn.addEventListener('click', () => {
+            logoutModal.classList.add('active');
+        });
 
-            if (!query) {
-                searchCard.style.display = 'none';
-                return;
-            }
+        document.getElementById('cancelLogout').addEventListener('click', () => {
+            logoutModal.classList.remove('active');
+        });
 
-            searchCard.style.display = 'block';
-            const results = cachedAllUsers.filter(u => u !== currentUser && u.toLowerCase().includes(query));
-
-            if (results.length === 0) {
-                searchList.innerHTML = `<div style="color: var(--text-muted); text-align: center; padding: 10px;">No users found.</div>`;
-                return;
-            }
-
-            searchList.innerHTML = '';
-            results.forEach(user => {
-                const isFriend = cachedFriends.includes(user);
-                const isPending = cachedRequests.includes(user) || sentRequests.includes(user);
-                const userAvatar = localStorage.getItem('avatar_' + user);
-                const avatarHtml = userAvatar ? `<img src="${userAvatar}" alt="${user}">` : user.charAt(0).toUpperCase();
-
-                let actionHtml = '';
-                if (isFriend) {
-                    actionHtml = `<button class="btn btn-muted" style="padding: 6px 12px; font-size: 0.8rem;">Friends</button>`;
-                } else if (isPending) {
-                    actionHtml = `<button class="btn btn-muted" style="padding: 6px 12px; font-size: 0.8rem;">Pending</button>`;
-                } else {
-                    actionHtml = `<button class="btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="sendRequest('${user}')"><i class="fa-solid fa-user-plus"></i> Add</button>`;
-                }
-
-                const div = document.createElement('div');
-                div.className = 'list-item';
-                div.innerHTML = `
-                    <div class="user-meta">
-                        <div class="avatar">${avatarHtml}</div>
-                        <div class="user-details"><div class="username-text">${user}</div></div>
-                    </div>
-                    <div class="friend-actions">${actionHtml}</div>
-                `;
-                searchList.appendChild(div);
-            });
-        }
-
-        function renderRequests(requests) {
-            cachedRequests = requests;
-            const container = document.getElementById('requestsList');
-            if (requests.length === 0) {
-                container.innerHTML = `<div style="color: var(--text-muted); text-align: center; padding: 10px;">No pending requests.</div>`;
-                return;
-            }
-
-            container.innerHTML = '';
-            requests.forEach(requester => {
-                const reqAvatar = localStorage.getItem('avatar_' + requester);
-                const avatarHtml = reqAvatar ? `<img src="${reqAvatar}" alt="${requester}">` : requester.charAt(0).toUpperCase();
-
-                const div = document.createElement('div');
-                div.className = 'list-item';
-                div.innerHTML = `
-                    <div class="user-meta">
-                        <div class="avatar">${avatarHtml}</div>
-                        <div class="user-details"><div class="username-text">${requester}</div></div>
-                    </div>
-                    <div class="friend-actions" style="gap: 6px;">
-                        <button class="btn" style="padding: 6px 10px; font-size: 0.75rem;" onclick="respondRequest('${requester}', 'accept')">Confirm</button>
-                        <button class="btn btn-danger" style="padding: 6px 10px; font-size: 0.75rem;" onclick="respondRequest('${requester}', 'decline')">Decline</button>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        function updateInboxBadge(count) {
-            const badge = document.getElementById('inboxBadge');
-            if (count > 0) {
-                badge.textContent = count;
-                badge.style.display = 'inline-block';
-            } else {
-                badge.style.display = 'none';
-            }
-        }
-
-        function toggleInboxModal() {
-            const modal = document.getElementById('inboxModal');
-            modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
-        }
-
-        function sendRequest(receiver) {
-            sentRequests.push(receiver);
-            socket.emit('send_friend_request', { sender: currentUser, receiver });
-            loadUserData();
-        }
-
-        function respondRequest(requester, action) {
-            socket.emit('respond_friend_request', { username: currentUser, requester, action });
-            loadUserData();
-        }
-
-        function logout() {
-            document.cookie = 'berry_user=; path=/; max-age=0';
-            localStorage.removeItem('username');
-            localStorage.removeItem('berry_user');
+        document.getElementById('confirmLogout').addEventListener('click', () => {
+            localStorage.clear();
             window.location.href = '/login';
-        }
-
-        loadUserData();
+        });
     </script>
 </body>
 </html>
