@@ -587,13 +587,6 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-         // --- Ironclad Registration Guard: Prevent visiting register if already logged in ---
-const activeUser = localStorage.getItem('berry_session_user') || localStorage.getItem('username');
-if (activeUser) {
-    window.location.replace('/dashboard');
-}
-
-     
         // --- Permanent Security & Session Guard ---
         let currentUsername = localStorage.getItem('berry_session_user') || localStorage.getItem('username');
         
