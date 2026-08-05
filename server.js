@@ -18,6 +18,12 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'login.html'));
 });
 
+// Add this with your other page routes in server.js
+app.get('/policy', (req, res) => {
+    res.sendFile(path.join(__dirname, 'policy.html'));
+});
+
+
 // Routes for HTML Pages
 app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname, 'register.html'));

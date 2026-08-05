@@ -160,19 +160,24 @@
             Already have an account? <a href="/login">Log in here</a>
         </div>
     </div>
-
     <script>
-      
 document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
     const errorMsg = document.getElementById('errorMsg');
     
     errorMsg.style.display = 'none';
 
+    if (password !== confirmPassword) {
+        errorMsg.textContent = 'Passwords do not match!';
+        errorMsg.style.display = 'block';
+        return;
+    }
+
     try {
-        const response = await fetch('/login', {
+        const response = await fetch('/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })
@@ -183,9 +188,10 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
         if (data.success) {
             localStorage.setItem('berry_user', username);
             localStorage.setItem('username', username);
-            window.location.href = '/dashboard';
+            // Redirects to your terms/policy page instead of dashboard
+            window.location.href = '/policy';
         } else {
-            errorMsg.textContent = data.message || 'Login failed.';
+            errorMsg.textContent = data.message || 'Registration failed.';
             errorMsg.style.display = 'block';
         }
     } catch (err) {
@@ -194,5 +200,6 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     }
 });
 </script>
+
 </body>
 </html>
