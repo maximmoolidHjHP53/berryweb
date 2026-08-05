@@ -162,38 +162,17 @@
     </div>
 
     <script>
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
     const errorMsg = document.getElementById('errorMsg');
     
     errorMsg.style.display = 'none';
 
-    if (password !== confirmPassword) {
-        errorMsg.textContent = 'Passwords do not match!';
-        errorMsg.style.display = 'block';
-        return;
-    }
-
-    // Helper function to handle fetch with auto-retries for sleeping servers
-    const fetchWithRetry = async (url, options, retries = 3, delay = 3000) => {
-        for (let i = 0; i < retries; i++) {
-            try {
-                const res = await fetch(url, options);
-                return res;
-            } catch (err) {
-                if (i === retries - 1) throw err;
-                errorMsg.textContent = `Server waking up... retrying (${i + 1}/${retries})...`;
-                errorMsg.style.display = 'block';
-                await new Promise(resolve => setTimeout(resolve, delay));
-            }
-        }
-    };
-
     try {
-        const response = await fetchWithRetry('/register', {
+        const response = await fetch('/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })
@@ -206,7 +185,7 @@
             localStorage.setItem('username', username);
             window.location.href = '/dashboard';
         } else {
-            errorMsg.textContent = data.message || 'Registration failed.';
+            errorMsg.textContent = data.message || 'Login failed.';
             errorMsg.style.display = 'block';
         }
     } catch (err) {
@@ -214,7 +193,6 @@
         errorMsg.style.display = 'block';
     }
 });
-
-    </script>
+</script>
 </body>
 </html>
