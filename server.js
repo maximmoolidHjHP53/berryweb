@@ -10,12 +10,10 @@ const io = new Server(server, {
     cors: { origin: "*", methods: ["GET", "POST"] } 
 });
 
-// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname)));
 
-// MongoDB Atlas Connection Setup
 const mongoUri = process.env.MONGO_URI || process.env.DATABASE_URL || "mongodb+srv://maximoolid123:maximoolid123@cluster0.b737s.mongodb.net/?retryWrites=true&w=majority";
 let db;
 
@@ -30,7 +28,7 @@ MongoClient.connect(mongoUri, { useUnifiedTopology: true })
 
 // Page Route Endpoints
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'home.html')); // Serves your landing page first
+    res.sendFile(path.join(__dirname, 'home.html'));
 });
 
 app.get('/home', (req, res) => {
@@ -42,7 +40,7 @@ app.get('/login', (req, res) => {
 });
 
 app.get('/register', (req, res) => {
-    res.sendFile(path.join(__dirname, 'register.html')); // Serves the registration page
+    res.sendFile(path.join(__dirname, 'register.html'));
 });
 
 app.get('/dashboard', (req, res) => {
@@ -57,8 +55,7 @@ app.get('/profile', (req, res) => {
     res.sendFile(path.join(__dirname, 'profile.html'));
 });
 
-
-// Authentication Routes
+// Authentication APIs
 app.post('/api/login', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -97,9 +94,6 @@ app.post('/api/register', async (req, res) => {
 
 // Socket.io Real-Time Event Handlers
 io.on('connection', (socket) => {
-    console.log('A user connected:', socket.id);
-
-    // Global user directory search
     socket.on('get_all_users', async () => {
         try {
             const usersCollection = db.collection('users');
@@ -111,7 +105,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Fetch user profile data including friends and pending requests
     socket.on('get_user_data', async (username) => {
         try {
             const usersCollection = db.collection('users');
@@ -127,40 +120,25 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Send Friend Request
     socket.on('send_friend_request', async ({ sender, receiver }) => {
         try {
             const usersCollection = db.collection('users');
             const targetUser = await usersCollection.findOne({ username: receiver });
-            if (!targetUser) {
-                socket.emit('friend_action_response', { success: false, message: 'User does not exist!' });
-                return;
-            }
+            if (!targetUser) return;
 
             let requests = targetUser.friendRequests || [];
             let friends = targetUser.friends || [];
 
-            if (friends.includes(sender)) {
-                socket.emit('friend_action_response', { success: false, message: 'You are already friends!' });
-                return;
-            }
-
-            if (requests.includes(sender)) {
-                socket.emit('friend_action_response', { success: false, message: 'Friend request already sent!' });
-                return;
-            }
+            if (friends.includes(sender) || requests.includes(sender)) return;
 
             requests.push(sender);
             await usersCollection.updateOne({ username: receiver }, { $set: { friendRequests: requests } });
-            
-            socket.emit('friend_action_response', { success: true, message: 'Friend request sent successfully!' });
             io.emit('refresh_requests_' + receiver);
         } catch (e) {
-            socket.emit('friend_action_response', { success: false, message: 'Server error sending request.' });
+            console.error(e);
         }
     });
 
-    // Accept or Reject Friend Request
     socket.on('respond_friend_request', async ({ username, requester, action }) => {
         try {
             const usersCollection = db.collection('users');
@@ -183,7 +161,6 @@ io.on('connection', (socket) => {
 
             await usersCollection.updateOne({ username }, { $set: { friendRequests: requests, friends: userFriends } });
 
-            socket.emit('friend_action_response', { success: true, list: userFriends, requests: requests });
             io.emit('refresh_friends_' + username);
             if (requesterDoc) io.emit('refresh_friends_' + requester);
             io.emit('refresh_requests_' + username);
@@ -192,7 +169,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Real-time typing indicators & Messaging
     socket.on('typing', (data) => {
         io.emit('display_typing', data);
     });
@@ -220,10 +196,6 @@ io.on('connection', (socket) => {
         } catch (e) {
             socket.emit('loaded_messages', []);
         }
-    });
-
-    socket.on('disconnect', () => {
-        // User disconnected
     });
 });
 
