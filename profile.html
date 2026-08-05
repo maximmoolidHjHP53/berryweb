@@ -146,9 +146,9 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-
-      // Replace your existing socket initialization with this:
+      // Replace your socket initialization with this exact block:
 const socket = io({
+    path: '/socket.io',
     transports: ['websocket', 'polling'],
     reconnection: true,
     reconnectionAttempts: Infinity,
@@ -156,6 +156,8 @@ const socket = io({
     reconnectionDelayMax: 5000,
     timeout: 20000
 });
+
+
 
 
       
