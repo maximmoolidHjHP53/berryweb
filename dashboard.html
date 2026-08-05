@@ -3,405 +3,309 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Berryweb - Dashboard</title>
+    <title>Dashboard - BerryWeb</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body {
-            background-color: #0f1117; color: #ffffff; padding: 20px;
-            animation: fadeInPage 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; opacity: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0e1621;
+            color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
         }
-        @keyframes fadeInPage { to { opacity: 1; } }
 
-        a, button, input { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        button:hover, a:hover { transform: translateY(-1px); }
-
-        .dashboard-container { max-width: 650px; margin: 0 auto; }
-
-        .user-header-card {
-            background: #1e222d; border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 20px; border-radius: 16px; display: flex; align-items: center;
-            justify-content: space-between; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        .dashboard-container {
+            width: 100%;
+            max-width: 480px;
         }
-        .user-info-left { display: flex; align-items: center; gap: 15px; }
 
-        .avatar-container {
-            width: 55px; height: 55px; border-radius: 50%; background: #22c55e;
-            display: flex; align-items: center; justify-content: center; font-weight: bold;
-            font-size: 22px; overflow: hidden; color: #fff; position: relative; cursor: pointer;
+        .card {
+            background-color: #17212b;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            margin-bottom: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        .avatar-container img { width: 100%; height: 100%; object-fit: cover; }
 
-        .user-details h2 { font-size: 19px; margin-bottom: 3px; }
-        .user-details a { font-size: 13px; color: #22c55e; text-decoration: none; font-weight: 500; }
-        .user-details a:hover { text-decoration: underline; }
-
-        .header-actions { display: flex; gap: 10px; align-items: center; }
-        .action-btn {
-            background: #2b3140; color: white; border: none; padding: 9px 15px;
-            border-radius: 10px; font-size: 13px; cursor: pointer; text-decoration: none;
-            display: inline-flex; align-items: center; gap: 6px; font-weight: 600;
+        /* Profile Header Section */
+        .profile-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
-        .action-btn.logout-btn { background: #ef4444; }
 
-        .card-box {
-            background: #1e222d; border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
-        .card-box h3 { font-size: 15px; margin-bottom: 15px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        .search-wrapper { position: relative; margin-bottom: 12px; }
-        .search-symbol {
-            position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
-            color: #22c55e; font-weight: bold; font-size: 16px; pointer-events: none;
+        .avatar {
+            width: 50px;
+            height: 50px;
+            background-color: #2fa572;
+            color: #0e1621;
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            text-transform: uppercase;
         }
+
+        .user-details h3 {
+            margin: 0 0 4px 0;
+            font-size: 18px;
+        }
+
+        .user-details span {
+            font-size: 13px;
+            color: #2fa572;
+            cursor: pointer;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.2s;
+        }
+
+        .btn-inbox {
+            background-color: #2b3b4c;
+            color: #f5f5f5;
+        }
+
+        .btn-logout {
+            background-color: #eb5757;
+            color: #fff;
+        }
+
+        .btn:hover {
+            opacity: 0.85;
+        }
+
+        /* Search Section */
+        h4 {
+            margin: 0 0 12px 0;
+            font-size: 14px;
+            color: #8a96a3;
+            letter-spacing: 0.5px;
+        }
+
+        .search-wrapper {
+            position: relative;
+        }
+
         .search-input {
-            width: 100%; background: #252a37; border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px; padding: 12px 15px 12px 36px; color: white; font-size: 14px; outline: none;
+            width: 100%;
+            padding: 10px 14px;
+            background-color: #0e1621;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            color: #f5f5f5;
+            box-sizing: border-box;
+            font-size: 14px;
         }
-        .search-input:focus { border-color: #22c55e; }
 
-        .search-results-list, .friends-list, .requests-list { display: flex; flex-direction: column; gap: 10px; }
-
-        .list-item {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 12px 15px; background: #252a37; border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.04);
+        .search-input:focus {
+            border-color: #2fa572;
+            outline: none;
         }
-        .item-info { display: flex; align-items: center; gap: 12px; }
 
-        .status-indicator { width: 11px; height: 11px; border-radius: 50%; display: inline-block; border: 2px solid #252a37; }
-        .status-online { background-color: #22c55e; box-shadow: 0 0 8px rgba(34, 197, 94, 0.7); }
-        .status-offline { background-color: #64748b; }
+        /* Live Search Results Dropdown */
+        .search-results {
+            background: #0e1621;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            margin-top: 5px;
+            max-height: 150px;
+            overflow-y: auto;
+            display: none;
+        }
 
-        .btn-primary {
-            background: #22c55e; color: white; border: none; padding: 7px 14px;
-            border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: bold; text-decoration: none;
-            display: inline-block;
+        .search-result-item {
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 14px;
         }
-        .btn-primary:hover { background: #16a34a; }
-        .btn-disabled { background: #334155; color: #94a3b8; cursor: not-allowed; }
-        .btn-danger { background: #ef4444; }
-        .btn-danger:hover { background: #dc2626; }
-        
-        .badge-friend { background: rgba(34, 197, 94, 0.15); color: #22c55e; font-size: 12px; padding: 5px 12px; border-radius: 8px; font-weight: 600; }
 
-        .chat-btn-wrapper { position: relative; display: inline-block; }
-        .friend-unread-badge {
-            background-color: #ef4444; color: white; font-size: 10px; font-weight: bold;
-            padding: 2px 6px; border-radius: 10px; position: absolute; top: -8px; right: -8px;
-            box-shadow: 0 2px 5px rgba(239, 68, 68, 0.5);
-            animation: pulseBadge 1.5s infinite;
+        .search-result-item button {
+            background: #2fa572;
+            color: #0e1621;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
         }
-        @keyframes pulseBadge { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
 
-        .modal-backdrop {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(5px);
-            display: flex; justify-content: center; align-items: center;
-            z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        /* Friend List */
+        .friend-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
         }
-        .modal-backdrop.active { opacity: 1; pointer-events: auto; }
-        .modal-content {
-            background: #1e222d; border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 28px; border-radius: 18px; width: 90%; max-width: 380px;
-            text-align: center; transform: scale(0.75); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+
+        .friend-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 14px;
         }
-        .modal-backdrop.active .modal-content { transform: scale(1); }
+
+        .no-friends {
+            color: #8a96a3;
+            font-size: 13px;
+            margin: 0;
+        }
     </style>
 </head>
 <body>
 
     <div class="dashboard-container">
-        <div class="user-header-card">
-            <div class="user-info-left">
-                <div class="avatar-container" id="headerAvatarContainer" onclick="window.location.href='/profile'">
-                    <span id="headerInitial">U</span>
-                </div>
+        <div class="card profile-header">
+            <div class="profile-info">
+                <div class="avatar" id="userAvatar">U</div>
                 <div class="user-details">
-                    <h2 id="displayUsername">User</h2>
-                    <a href="/profile">View Profile</a>
+                    <h3 id="usernameDisplay">User</h3>
+                    <span onclick="alert('Profile settings coming soon!')">View Profile</span>
                 </div>
             </div>
-            <div class="header-actions">
-                <a href="/chat" class="action-btn">Inbox</a>
-                <button class="action-btn logout-btn" id="logoutBtn">Log Out</button>
+            <div class="action-buttons">
+                <button class="btn btn-inbox" onclick="window.location.href='/inbox'">Inbox</button>
+                <button class="btn btn-logout" onclick="logout()">Log Out</button>
             </div>
         </div>
 
-        <div class="card-box">
-            <h3>Find Users & Add Friends</h3>
+        <div class="card">
+            <h4>FIND USERS & ADD FRIENDS</h4>
             <div class="search-wrapper">
-                <span class="search-symbol">@</span>
-                <input type="text" id="searchInput" class="search-input" autocomplete="off" placeholder="searchusername..." oninput="handleSearch(this.value)">
-            </div>
-            <div id="searchResultsContainer" style="display: none;">
-                <div class="search-results-list" id="searchResultsList"></div>
+                <input type="text" id="searchInput" class="search-input" placeholder="@ search username...">
+                <div id="searchResults" class="search-results"></div>
             </div>
         </div>
 
-        <div class="card-box" id="requestsCardBox" style="display: none;">
-            <h3>Friend Requests</h3>
-            <div class="requests-list" id="requestsListContainer"></div>
-        </div>
-
-        <div class="card-box">
-            <h3>My Friendlist</h3>
-            <div class="friends-list" id="friendsListContainer">
-                <p style="color: #64748b; font-size: 14px;">Loading friendlist...</p>
-            </div>
+        <div class="card">
+            <h4>MY FRIENDLIST</h4>
+            <ul id="friendList" class="friend-list">
+                <li class="no-friends">Loading friendlist...</li>
+            </ul>
         </div>
     </div>
 
-    <div id="logoutModal" class="modal-backdrop">
-        <div class="modal-content">
-            <h3 style="font-size: 20px; margin-bottom: 8px; color: #fff;">Sign Out</h3>
-            <p style="color: #94a3b8; font-size: 14px; margin-bottom: 20px;">Are you sure you want to log out of Berryweb?</p>
-            <div style="display: flex; gap: 12px;">
-                <button id="cancelLogout" style="flex: 1; padding: 11px; background: #334155; border: none; color: white; border-radius: 10px; font-weight: 600; cursor: pointer;">No, Stay</button>
-                <button id="confirmLogout" style="flex: 1; padding: 11px; background: #ef4444; border: none; color: white; border-radius: 10px; font-weight: 600; cursor: pointer;">Yes, Log Out</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="/socket.io/socket.io.js"></script>
     <script>
-        const currentUser = localStorage.getItem('username') || localStorage.getItem('berry_user');
-        if (!currentUser) {
+        // Check active login session
+        const currentUsername = localStorage.getItem('username') || localStorage.getItem('berry_user');
+        if (!currentUsername) {
             window.location.href = '/login';
         } else {
-            history.pushState(null, null, location.href);
-            window.onpopstate = function () { history.go(1); };
-
-            document.getElementById('displayUsername').textContent = currentUser;
-            document.getElementById('headerInitial').textContent = currentUser.charAt(0).toUpperCase();
-        }
-         
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js">
-</script>
-
-<script>
-    // Automatically detects if you are local or live on Render
-    const socket = io(window.location.origin, {
-        transports: ['polling', 'websocket'],
-        reconnection: true,
-        reconnectionAttempts: Infinity,
-        reconnectionDelay: 1000
-    });
-
-    socket.on('connect', () => {
-        console.log("Successfully connected with ID:", socket.id);
-    });
-
-    socket.on('connect_error', (err) => {
-        console.log("Connection attempt, waiting for server...", err.message);
-    });
-
-        let allRegisteredUsers = [];
-        let onlineUsersList = [];
-        let typingUsersMap = {};
-        let currentUserData = { friends: [], friendRequests: [], sentRequests: [], unreadCounts: {} };
-        let usersAvatarsMap = {};
-
-        socket.emit('user_online', currentUser);
-        socket.emit('get_user_data', currentUser);
-        socket.emit('get_all_users');
-
-        socket.on('all_users_list', (users) => {
-            allRegisteredUsers = users.filter(u => u !== currentUser);
-        });
-
-        socket.on('user_data_response', (userData) => {
-            currentUserData = userData;
-            if (userData.avatar) {
-                usersAvatarsMap[currentUser] = userData.avatar;
-                document.getElementById('headerAvatarContainer').innerHTML = `<img src="${userData.avatar}" alt="Avatar">`;
-            }
-            renderFriends(userData.friends || []);
-            renderRequests(userData.friendRequests || []);
-            if (document.getElementById('searchInput').value.trim() !== '') {
-                handleSearch(document.getElementById('searchInput').value);
-            }
-        });
-
-        socket.on('profile_updated', (data) => {
-            usersAvatarsMap[data.username] = data.profile.avatar;
-            if (data.username === currentUser && data.profile.avatar) {
-                document.getElementById('headerAvatarContainer').innerHTML = `<img src="${data.profile.avatar}" alt="Avatar">`;
-            }
-            renderFriends(currentUserData.friends || []);
-            if (document.getElementById('searchInput').value.trim() !== '') {
-                handleSearch(document.getElementById('searchInput').value);
-            }
-        });
-
-        socket.on('update_online_status', (onlineArr) => {
-            onlineUsersList = onlineArr;
-            socket.emit('get_user_data', currentUser);
-        });
-
-        socket.on('update_unread_' + currentUser, (unreadCounts) => {
-            currentUserData.unreadCounts = unreadCounts || {};
-            renderFriends(currentUserData.friends || []);
-        });
-
-        socket.on('refresh_friends_' + currentUser, () => {
-            socket.emit('get_user_data', currentUser);
-        });
-
-        socket.on('refresh_requests_' + currentUser, () => {
-            socket.emit('get_user_data', currentUser);
-        });
-
-        socket.on('typing_status', (data) => {
-            if (data.receiver === currentUser) {
-                typingUsersMap[data.sender] = data.isTyping;
-                renderFriends(currentUserData.friends || []);
-            }
-        });
-
-        // Search with global avatars
-        function handleSearch(query) {
-            const container = document.getElementById('searchResultsContainer');
-            const list = document.getElementById('searchResultsList');
-            const trimmed = query.replace('@', '').trim().toLowerCase();
-
-            if (trimmed === '') {
-                container.style.display = 'none';
-                list.innerHTML = '';
-                return;
-            }
-
-            container.style.display = 'block';
-            const matches = allRegisteredUsers.filter(u => u.toLowerCase().includes(trimmed));
-
-            if (matches.length === 0) {
-                list.innerHTML = `<p style="color: #64748b; font-size: 13px; padding: 5px;">No users found.</p>`;
-                return;
-            }
-
-            list.innerHTML = '';
-            matches.forEach(username => {
-                const isFriend = (currentUserData.friends || []).includes(username);
-                const isPending = (currentUserData.sentRequests || []).includes(username);
-                const isSelf = username === currentUser;
-                const avatarHtml = usersAvatarsMap[username] ? `<img src="${usersAvatarsMap[username]}" alt="Avatar">` : username.charAt(0).toUpperCase();
-
-                const item = document.createElement('div');
-                item.className = 'list-item';
-                
-                let actionHtml = '';
-                if (isSelf) {
-                    actionHtml = `<span style="font-size: 12px; color: #64748b;">(You)</span>`;
-                } else if (isFriend) {
-                    actionHtml = `<span class="badge-friend">Friends</span>`;
-                } else if (isPending) {
-                    actionHtml = `<button class="btn-primary btn-disabled" disabled>Pending / Requested</button>`;
-                } else {
-                    actionHtml = `<button class="btn-primary" onclick="sendFriendRequest('${username}')">Add Friend</button>`;
-                }
-
-                item.innerHTML = `
-                    <div class="item-info">
-                        <div class="avatar-container" style="width: 36px; height: 36px; font-size: 14px; cursor: default;">${avatarHtml}</div>
-                        <h4 style="font-size: 14px; font-weight: 600;">@${username}</h4>
-                    </div>
-                    <div>${actionHtml}</div>
-                `;
-                list.appendChild(item);
-            });
+            document.getElementById('usernameDisplay').textContent = currentUsername;
+            document.getElementById('userAvatar').textContent = currentUsername.charAt(0).toUpperCase();
         }
 
-        function sendFriendRequest(targetUser) {
-            socket.emit('send_friend_request', { sender: currentUser, receiver: targetUser });
-            if (!currentUserData.sentRequests) currentUserData.sentRequests = [];
-            currentUserData.sentRequests.push(targetUser);
-            handleSearch(document.getElementById('searchInput').value);
-        }
-
-        function respondRequest(requester, action) {
-            socket.emit('respond_friend_request', { username: currentUser, requester, action });
-        }
-
-        // Render Friendlist with correct Chat URL redirection (`/chat?to=friendname`)
-        function renderFriends(friends) {
-            const container = document.getElementById('friendsListContainer');
-            if (friends.length === 0) {
-                container.innerHTML = `<p style="color: #64748b; font-size: 14px;">No friends added yet. Search users above!</p>`;
-                return;
-            }
-
-            container.innerHTML = '';
-            friends.forEach(friend => {
-                const isOnline = onlineUsersList.includes(friend);
-                const statusClass = isOnline ? 'status-online' : 'status-offline';
-                const unreadCount = (currentUserData.unreadCounts || {})[friend] || 0;
-                const isTyping = typingUsersMap[friend];
-                const avatarHtml = usersAvatarsMap[friend] ? `<img src="${usersAvatarsMap[friend]}" alt="Avatar">` : friend.charAt(0).toUpperCase();
-
-                const item = document.createElement('div');
-                item.className = 'list-item';
-                item.innerHTML = `
-                    <div class="item-info">
-                        <div style="position: relative;">
-                            <div class="avatar-container" style="width: 40px; height: 40px; font-size: 16px; cursor: default;">${avatarHtml}</div>
-                            <span class="status-indicator ${statusClass}" style="position: absolute; bottom: 0; right: 0;"></span>
-                        </div>
-                        <div>
-                            <h4 style="font-size: 14px; font-weight: 600;">@${friend}</h4>
-                            <span style="font-size: 11px; color: ${isTyping ? '#22c55e' : '#94a3b8'}; font-weight: ${isTyping ? 'bold' : 'normal'};">
-                                ${isTyping ? 'typing...' : (isOnline ? 'Online' : 'Offline')}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="chat-btn-wrapper">
-                        <a href="/chat?to=${friend}" class="btn-primary">Chat</a>
-                        ${unreadCount > 0 ? `<span class="friend-unread-badge">${unreadCount}</span>` : ''}
-                    </div>
-                `;
-                container.appendChild(item);
-            });
-        }
-
-        function renderRequests(requests) {
-            const cardBox = document.getElementById('requestsCardBox');
-            const container = document.getElementById('requestsListContainer');
-
-            if (!requests || requests.length === 0) {
-                cardBox.style.display = 'none';
-                container.innerHTML = '';
-                return;
-            }
-
-            cardBox.style.display = 'block';
-            container.innerHTML = '';
-            requests.forEach(requester => {
-                const avatarHtml = usersAvatarsMap[requester] ? `<img src="${usersAvatarsMap[requester]}" alt="Avatar">` : requester.charAt(0).toUpperCase();
-                const item = document.createElement('div');
-                item.className = 'list-item';
-                item.innerHTML = `
-                    <div class="item-info">
-                        <div class="avatar-container" style="width: 38px; height: 38px; font-size: 15px; cursor: default;">${avatarHtml}</div>
-                        <h4 style="font-size: 14px; font-weight: 600;">@${requester}</h4>
-                    </div>
-                    <div style="display: flex; gap: 8px;">
-                        <button class="btn-primary" onclick="respondRequest('${requester}', 'accept')">Accept</button>
-                        <button class="btn-primary btn-danger" onclick="respondRequest('${requester}', 'decline')">Decline</button>
-                    </div>
-                `;
-                container.appendChild(item);
-            });
-        }
-
-        const logoutBtn = document.getElementById('logoutBtn');
-        const logoutModal = document.getElementById('logoutModal');
-
-        logoutBtn.addEventListener('click', () => logoutModal.classList.add('active'));
-        document.getElementById('cancelLogout').addEventListener('click', () => logoutModal.classList.remove('active'));
-        document.getElementById('confirmLogout').addEventListener('click', () => {
+        // Logout function
+        function logout() {
             localStorage.clear();
-            window.location.href = '/home';
+            window.location.href = '/login';
+        }
+
+        // Live User Search Functionality
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+
+        searchInput.addEventListener('input', async (e) => {
+            const query = e.target.value.trim();
+            if (query.length < 1) {
+                searchResults.style.display = 'none';
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&user=${encodeURIComponent(currentUsername)}`);
+                const users = await res.json();
+
+                searchResults.innerHTML = '';
+                if (users.length > 0) {
+                    searchResults.style.display = 'block';
+                    users.forEach(user => {
+                        const div = document.createElement('div');
+                        div.className = 'search-result-item';
+                        div.innerHTML = `<span>@${user.username}</span> <button onclick="addFriend('${user.username}')">Add</button>`;
+                        searchResults.appendChild(div);
+                    });
+                } else {
+                    searchResults.style.display = 'block';
+                    searchResults.innerHTML = `<div style="padding:10px; color:#8a96a3; font-size:13px;">No users found</div>`;
+                }
+            } catch (err) {
+                console.error("Search error", err);
+            }
         });
-    </>
+
+        // Add Friend Function
+        async function addFriend(friendUsername) {
+            try {
+                const res = await fetch('/api/add-friend', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: currentUsername, friendUsername })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(`Successfully added @${friendUsername}!`);
+                    searchInput.value = '';
+                    searchResults.style.display = 'none';
+                    loadFriends();
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                alert("Error adding friend.");
+            }
+        }
+
+        // Load Friendlist Function
+        async function loadFriends() {
+            const friendListEl = document.getElementById('friendList');
+            try {
+                const res = await fetch(`/api/friends?user=${encodeURIComponent(currentUsername)}`);
+                const data = await res.json();
+
+                friendListEl.innerHTML = '';
+                if (data.friends && data.friends.length > 0) {
+                    data.friends.forEach(friend => {
+                        const li = document.createElement('li');
+                        li.className = 'friend-item';
+                        li.innerHTML = `<span>@${friend}</span> <span style="color:#2fa572; font-size:12px;">Connected</span>`;
+                        friendListEl.appendChild(li);
+                    });
+                } else {
+                    friendListEl.innerHTML = `<li class="no-friends">No friends added yet. Search above to connect!</li>`;
+                }
+            } catch (err) {
+                friendListEl.innerHTML = `<li class="no-friends">Failed to load friendlist.</li>`;
+            }
+        }
+
+        // Load friends on initial render
+        loadFriends();
+    </script>
 </body>
 </html>
