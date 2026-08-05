@@ -66,6 +66,13 @@
         .btn-danger { background: #eb5757; }
         .btn-danger:hover { background: #d33b3b; }
 
+        .btn-muted {
+            background: var(--bg-tertiary);
+            color: var(--text-muted);
+            cursor: default;
+        }
+        .btn-muted:hover { background: var(--bg-tertiary); }
+
         .inbox-btn {
             position: relative;
             background: var(--bg-tertiary);
@@ -257,7 +264,7 @@
         </div>
 
         <div class="search-section">
-            <input type="text" id="searchInput" class="search-bar" placeholder="🔍 Search users or friends..." oninput="filterList()">
+            <input type="text" id="searchInput" class="search-bar" placeholder="Search @..." oninput="filterList()">
         </div>
 
         <div class="section-card">
@@ -298,6 +305,7 @@
         let cachedFriends = [];
         let cachedAllUsers = [];
         let cachedRequests = [];
+        let sentRequests = [];
 
         function loadDashboardData() {
             socket.emit('get_user_data', currentUser);
@@ -310,16 +318,18 @@
             renderFriends(cachedFriends);
             renderRequests(cachedRequests);
             updateInboxBadge(cachedRequests.length);
+            filterList(); // Re-render search results in case friend status changed
         });
 
         socket.on('all_users_list', (users) => {
             cachedAllUsers = users;
+            filterList();
         });
 
         socket.on('refresh_friends_' + currentUser, loadDashboardData);
         socket.on('refresh_requests_' + currentUser, loadDashboardData);
 
-        // Real-time message listener for indicator updates & 5-letter preview
+        // Real-time message listener for unread badge and 5-letter preview
         socket.on('receive_message', (data) => {
             const otherUser = data.sender === currentUser ? data.receiver : data.sender;
             
@@ -357,7 +367,6 @@
 
                 const div = document.createElement('div');
                 div.className = 'list-item';
-                // Direct jump to chat box when clicking friend box
                 div.onclick = () => { window.location.href = `/chat?with=${friend}`; };
                 div.innerHTML = `
                     <div class="user-meta">
@@ -376,11 +385,16 @@
             });
         }
 
-        // Live Search Filter Function
+        // Live Search Filter Function (handles Search @... format & status indicators)
         function filterList() {
-            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            let query = document.getElementById('searchInput').value.trim();
             const searchCard = document.getElementById('searchResultCard');
             const searchList = document.getElementById('searchResultList');
+
+            if (query.startsWith('@')) {
+                query = query.substring(1);
+            }
+            query = query.toLowerCase().trim();
 
             if (!query) {
                 searchCard.style.display = 'none';
@@ -389,12 +403,7 @@
 
             searchCard.style.display = 'block';
             
-            // Find users who are NOT current user and NOT already friends
-            const results = cachedAllUsers.filter(u => 
-                u !== currentUser && 
-                !cachedFriends.includes(u) && 
-                u.toLowerCase().includes(query)
-            );
+            const results = cachedAllUsers.filter(u => u !== currentUser && u.toLowerCase().includes(query));
 
             if (results.length === 0) {
                 searchList.innerHTML = `<div style="color: var(--text-muted); text-align: center; padding: 10px;">No users found.</div>`;
@@ -403,6 +412,18 @@
 
             searchList.innerHTML = '';
             results.forEach(user => {
+                const isFriend = cachedFriends.includes(user);
+                const isPending = cachedRequests.includes(user) || sentRequests.includes(user);
+
+                let actionHtml = '';
+                if (isFriend) {
+                    actionHtml = `<button class="btn btn-muted" style="padding: 6px 12px; font-size: 0.8rem;">Friends</button>`;
+                } else if (isPending) {
+                    actionHtml = `<button class="btn btn-muted" style="padding: 6px 12px; font-size: 0.8rem;">Pending</button>`;
+                } else {
+                    actionHtml = `<button class="btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="sendRequest('${user}')"><i class="fa-solid fa-user-plus"></i> Add</button>`;
+                }
+
                 const div = document.createElement('div');
                 div.className = 'list-item';
                 div.innerHTML = `
@@ -413,7 +434,7 @@
                         </div>
                     </div>
                     <div class="friend-actions">
-                        <button class="btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="sendRequest('${user}')"><i class="fa-solid fa-user-plus"></i> Add</button>
+                        ${actionHtml}
                     </div>
                 `;
                 searchList.appendChild(div);
@@ -463,6 +484,7 @@
         }
 
         function sendRequest(receiver) {
+            sentRequests.push(receiver);
             socket.emit('send_friend_request', { sender: currentUser, receiver });
             loadDashboardData();
         }
