@@ -30,11 +30,19 @@ MongoClient.connect(mongoUri, { useUnifiedTopology: true })
 
 // Page Route Endpoints
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'login.html'));
+    res.sendFile(path.join(__dirname, 'home.html')); // Serves your landing page first
+});
+
+app.get('/home', (req, res) => {
+    res.sendFile(path.join(__dirname, 'home.html'));
 });
 
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'login.html'));
+});
+
+app.get('/register', (req, res) => {
+    res.sendFile(path.join(__dirname, 'register.html')); // Serves the registration page
 });
 
 app.get('/dashboard', (req, res) => {
@@ -48,6 +56,7 @@ app.get('/chat', (req, res) => {
 app.get('/profile', (req, res) => {
     res.sendFile(path.join(__dirname, 'profile.html'));
 });
+
 
 // Authentication Routes
 app.post('/api/login', async (req, res) => {
