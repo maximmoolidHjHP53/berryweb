@@ -141,23 +141,35 @@ app.post('/api/respond-request', async (req, res) => {
     }
 });
 
-
-// In-memory typing tracker state
-const typingStatus = {};
+// --- Typing Indicator Backend Routes ---
+let typingStatus = {};
 
 app.post('/api/typing', (req, res) => {
-    const { user, friend, typing } = req.body;
-    if (!typingStatus[friend]) typingStatus[friend] = {};
-    typingStatus[friend][user] = typing;
-    res.json({ success: true });
+    try {
+        const { user, friend, typing } = req.body;
+        if (!user || !friend) {
+            return res.status(400).json({ error: 'Missing parameters' });
+        }
+        const key = `${user}_${friend}`;
+        typingStatus[key] = typing;
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 app.get('/api/get-typing', (req, res) => {
-    const { user, friend } = req.query; // user = friend checking on, friend = current user target
-    const isTyping = typingStatus[user] && typingStatus[user][friend] === true;
-    res.json({ isTyping });
+    try {
+        const { user, friend } = req.query;
+        if (!user || !friend) {
+            return res.json({ isTyping: false });
+        }
+        const key = `${user}_${friend}`;
+        res.json({ isTyping: !!typingStatus[key] });
+    } catch (err) {
+        res.json({ isTyping: false });
+    }
 });
-
 
 
 // Add these routes to your server.js file alongside your other API routes

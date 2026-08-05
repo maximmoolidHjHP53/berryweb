@@ -412,20 +412,21 @@
         }
 
         async function checkTypingStatus() {
-            try {
-                const res = await fetch(`/api/get-typing?user=${encodeURIComponent(friendUsername)}&friend=${encodeURIComponent(currentUsername)}`);
-                const data = await res.json();
-                const indicator = document.getElementById('typingIndicator');
-                const userSpan = document.getElementById('typingUser');
+    try {
+        const res = await fetch(`/api/get-typing?user=${encodeURIComponent(friendUsername)}&friend=${encodeURIComponent(currentUsername)}`);
+        const data = await res.json();
+        const indicator = document.getElementById('typingIndicator');
+        const userSpan = document.getElementById('typingUser');
 
-                if (data.isTyping) {
-                    userSpan.textContent = `@${friendUsername}`;
-                    indicator.style.display = 'flex'; // Forces block container rendering
-                } else {
-                    indicator.style.display = 'none';
-                }
-            } catch (err) {}
+        if (data.isTyping) {
+            userSpan.textContent = `@${friendUsername}`;
+            indicator.style.setProperty('display', 'flex', 'important'); // Forces display over any overriding CSS conflicts
+        } else {
+            indicator.style.setProperty('display', 'none', 'important');
         }
+    } catch (err) {}
+}
+
 
         // --- Send Text Message ---
         async function sendMessage() {
