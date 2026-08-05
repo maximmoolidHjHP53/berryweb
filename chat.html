@@ -3,19 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Berryweb - Secure Chat</title>
+    <title>Berryweb - Chat</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --bg-primary: #0e1621;
             --bg-secondary: #17212b;
-            --bg-tertiary: #242f3d;
             --accent-green: #2fa572;
             --accent-green-hover: #23855a;
             --text-main: #f5f5f5;
             --text-muted: #8a96a3;
             --border-glass: rgba(255, 255, 255, 0.08);
-            --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -26,125 +24,21 @@
             height: 100vh;
             height: 100dvh;
             display: flex;
+            flex-direction: column;
             overflow: hidden;
         }
 
-        /* Mobile Responsive Layout Switcher */
-        .app-container {
-            display: flex;
-            width: 100vw;
-            height: 100vh;
-            height: 100dvh;
-        }
-
-        /* Sidebar / Friends List */
-        .sidebar {
-            width: 320px;
-            background: var(--bg-secondary);
-            border-right: 1px solid var(--border-glass);
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            transition: var(--transition-smooth);
-            z-index: 10;
-        }
-
-        .sidebar-header {
-            padding: 16px;
-            background: var(--bg-tertiary);
-            border-bottom: 1px solid var(--border-glass);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .sidebar-header h3 { font-size: 1.1rem; }
-
-        .friends-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 8px;
-        }
-
-        .friend-item {
-            display: flex;
-            align-items: center;
-            padding: 12px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: var(--transition-smooth);
-            margin-bottom: 4px;
-            position: relative;
-        }
-
-        .friend-item:hover, .friend-item.active {
-            background: var(--bg-tertiary);
-        }
-
-        .friend-avatar {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: var(--accent-green);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            color: white;
-            margin-right: 12px;
-            flex-shrink: 0;
-        }
-
-        .friend-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .friend-name {
-            font-weight: 600;
-            font-size: 0.95rem;
-            margin-bottom: 3px;
-        }
-
-        .friend-preview {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Right Side Indicator & Counter Styles */
-        .friend-meta {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            justify-content: center;
-            margin-left: 8px;
-            flex-shrink: 0;
-        }
-
-        .unread-badge {
-            background: var(--accent-green);
-            color: white;
-            font-size: 0.7rem;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 10px;
-            display: none;
-            min-width: 18px;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(47, 165, 114, 0.4);
-        }
-
-        /* Chat Window Area */
-        .chat-area {
+        .chat-box-wrapper {
             flex: 1;
             display: flex;
             flex-direction: column;
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
             background: var(--bg-primary);
+            border-left: 1px solid var(--border-glass);
+            border-right: 1px solid var(--border-glass);
             height: 100%;
-            position: relative;
         }
 
         .chat-header {
@@ -153,16 +47,38 @@
             border-bottom: 1px solid var(--border-glass);
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
         }
 
         .back-btn {
-            display: none;
             background: none;
             border: none;
             color: var(--text-main);
-            font-size: 1.2rem;
+            font-size: 1rem;
             cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .chat-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .chat-username {
+            font-size: 1rem;
+            font-weight: 600;
         }
 
         .chat-messages {
@@ -216,7 +132,6 @@
             color: var(--text-main);
             font-size: 0.95rem;
             outline: none;
-            transition: var(--transition-smooth);
         }
 
         .chat-input-area input:focus {
@@ -234,60 +149,28 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: var(--transition-smooth);
             flex-shrink: 0;
         }
 
         .send-btn:hover { background: var(--accent-green-hover); }
-
-        /* Mobile Responsive Breakpoints */
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                position: absolute;
-                left: 0;
-                top: 0;
-                z-index: 20;
-            }
-            .sidebar.hidden {
-                transform: translateX(-100%);
-            }
-            .chat-area {
-                width: 100%;
-                position: absolute;
-                left: 0;
-                top: 0;
-            }
-            .back-btn {
-                display: inline-flex;
-            }
-        }
     </style>
 </head>
 <body>
 
-    <div class="app-container">
-        <div class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <h3>Chats</h3>
-                <button onclick="window.location.href='/dashboard'" style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i class="fa-solid fa-arrow-left"></i> Dashboard</button>
-            </div>
-            <div class="friends-list" id="friendsListContainer">
-                </div>
+    <div class="chat-box-wrapper">
+        <div class="chat-header">
+            <a href="/dashboard" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
+            <div class="chat-avatar" id="activeAvatar">?</div>
+            <div class="chat-username" id="activeChatUser">Loading...</div>
         </div>
 
-        <div class="chat-area" id="chatArea">
-            <div class="chat-header">
-                <button class="back-btn" id="backBtn" onclick="toggleSidebar()"><i class="fa-solid fa-arrow-left"></i></button>
-                <div class="friend-avatar" id="activeAvatar" style="width: 36px; height: 36px; font-size: 0.85rem;">?</div>
-                <h3 id="activeChatUser">Select a friend to chat</h3>
-            </div>
-            <div class="chat-messages" id="chatMessages">
-                </div>
-            <div class="chat-input-area" id="inputArea" style="display: none;">
-                <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off">
-                <button class="send-btn" id="sendBtn"><i class="fa-solid fa-paper-plane"></i></button>
-            </div>
+        <div class="chat-messages" id="chatMessages">
+            <div style="color: var(--text-muted); text-align: center; margin-top: 20px;">Loading conversation...</div>
+        </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off">
+            <button class="send-btn" id="sendBtn"><i class="fa-solid fa-paper-plane"></i></button>
         </div>
     </div>
 
@@ -297,111 +180,38 @@
         const currentUser = localStorage.getItem('username') || localStorage.getItem('berry_user');
         if (!currentUser) window.location.href = '/login';
 
-        let activeReceiver = null;
-        let unreadCounts = {};
-        let lastMessages = {};
+        const urlParams = new URLSearchParams(window.location.search);
+        const activeReceiver = urlParams.get('with');
 
-        // Fetch user's friends list
-        socket.emit('get_user_data', currentUser);
-        socket.on('user_data_response', (data) => {
-            renderFriends(data.friends || []);
-        });
-
-        // Real-time listener for refreshed friends list
-        socket.on('refresh_friends_' + currentUser, () => {
-            socket.emit('get_user_data', currentUser);
-        });
-
-        function renderFriends(friends) {
-            const container = document.getElementById('friendsListContainer');
-            if (friends.length === 0) {
-                container.innerHTML = `<div style="padding: 20px; text-align: center; color: var(--text-muted);">No friends yet. Add friends from the dashboard!</div>`;
-                return;
-            }
-
-            container.innerHTML = '';
-            friends.forEach(friend => {
-                const count = unreadCounts[friend] || 0;
-                const snippet = lastMessages[friend] ? lastMessages[friend].substring(0, 5) : '';
-
-                const div = document.createElement('div');
-                div.className = `friend-item ${activeReceiver === friend ? 'active' : ''}`;
-                div.onclick = () => selectFriend(friend);
-                div.innerHTML = `
-                    <div class="friend-avatar">${friend.charAt(0).toUpperCase()}</div>
-                    <div class="friend-info">
-                        <div class="friend-name">${friend}</div>
-                        <div class="friend-preview" id="preview_${friend}">${snippet ? snippet + '...' : 'Tap to chat'}</div>
-                    </div>
-                    <div class="friend-meta">
-                        <div class="unread-badge" id="badge_${friend}" style="display: ${count > 0 ? 'inline-block' : 'none'};">${count}</div>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
+        if (!activeReceiver) {
+            window.location.href = '/dashboard';
         }
 
-        function selectFriend(friend) {
-            activeReceiver = friend;
-            document.getElementById('activeChatUser').textContent = friend;
-            document.getElementById('activeAvatar').textContent = friend.charAt(0).toUpperCase();
-            document.getElementById('inputArea').style.display = 'flex';
+        document.getElementById('activeChatUser').textContent = activeReceiver;
+        document.getElementById('activeAvatar').textContent = activeReceiver.charAt(0).toUpperCase();
 
-            // Reset unread count for this friend
-            unreadCounts[friend] = 0;
-            const badge = document.getElementById(`badge_${friend}`);
-            if (badge) badge.style.display = 'none';
-
-            // Mobile view toggle
-            if (window.innerWidth <= 768) {
-                document.getElementById('sidebar').classList.add('hidden');
-            }
-
-            // Highlight active item
-            document.querySelectorAll('.friend-item').forEach(el => el.classList.remove('active'));
-            // Refresh list highlights
-            socket.emit('get_user_data', currentUser);
-
-            // Fetch chat history
-            socket.emit('get_messages', { user1: currentUser, user2: friend });
-        }
-
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.remove('hidden');
-        }
-
-        // Receive Message Handler
-        socket.on('receive_message', (data) => {
-            // Check if message belongs to current open conversation
-            if ((data.sender === activeReceiver && data.receiver === currentUser) ||
-                (data.sender === currentUser && data.receiver === activeReceiver)) {
-                appendMessage(data);
-            }
-
-            // Handle background messages / unread indicator / 5-letter snippet
-            const otherUser = data.sender === currentUser ? data.receiver : data.sender;
-            if (data.receiver === currentUser && data.sender !== activeReceiver) {
-                unreadCounts[otherUser] = (unreadCounts[otherUser] || 0) + 1;
-            }
-
-            if (data.sender === otherUser || data.receiver === otherUser) {
-                lastMessages[otherUser] = data.message;
-                const previewEl = document.getElementById(`preview_${otherUser}`);
-                if (previewEl) {
-                    previewEl.textContent = data.message.substring(0, 5) + '...';
-                }
-                const badgeEl = document.getElementById(`badge_${otherUser}`);
-                if (badgeEl && unreadCounts[otherUser] > 0) {
-                    badgeEl.textContent = unreadCounts[otherUser];
-                    badgeEl.style.display = 'inline-block';
-                }
-            }
-        });
+        socket.emit('get_messages', { user1: currentUser, user2: activeReceiver });
 
         socket.on('loaded_messages', (messages) => {
             const container = document.getElementById('chatMessages');
             container.innerHTML = '';
+            if (messages.length === 0) {
+                container.innerHTML = `<div style="color: var(--text-muted); text-align: center; margin-top: 20px;">Say hello to ${activeReceiver}!</div>`;
+                return;
+            }
             messages.forEach(msg => appendMessage(msg));
+        });
+
+        socket.on('receive_message', (data) => {
+            if ((data.sender === activeReceiver && data.receiver === currentUser) ||
+                (data.sender === currentUser && data.receiver === activeReceiver)) {
+                
+                const container = document.getElementById('chatMessages');
+                if (container.children.length === 1 && container.children[0].tagName === 'DIV' && container.children[0].style.color) {
+                    container.innerHTML = '';
+                }
+                appendMessage(data);
+            }
         });
 
         function appendMessage(data) {
@@ -413,7 +223,6 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        // Send Message
         document.getElementById('sendBtn').onclick = sendMessage;
         document.getElementById('messageInput').onkeypress = (e) => {
             if (e.key === 'Enter') sendMessage();
@@ -422,7 +231,7 @@
         function sendMessage() {
             const input = document.getElementById('messageInput');
             const text = input.value.trim();
-            if (!text || !activeReceiver) return;
+            if (!text) return;
 
             const msgData = {
                 sender: currentUser,
