@@ -176,15 +176,25 @@
             document.getElementById('displayUsername').textContent = currentUser;
             document.getElementById('headerInitial').textContent = currentUser.charAt(0).toUpperCase();
         }
+         
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js">
+</script>
 
-        const socket = io();
-        <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
-    const socket = io({
+    // Automatically detects if you are local or live on Render
+    const socket = io(window.location.origin, {
         transports: ['polling', 'websocket'],
         reconnection: true,
         reconnectionAttempts: Infinity,
         reconnectionDelay: 1000
+    });
+
+    socket.on('connect', () => {
+        console.log("Successfully connected with ID:", socket.id);
+    });
+
+    socket.on('connect_error', (err) => {
+        console.log("Connection attempt, waiting for server...", err.message);
     });
 
         let allRegisteredUsers = [];
@@ -392,6 +402,6 @@
             localStorage.clear();
             window.location.href = '/home';
         });
-    </script>
+    </>
 </body>
 </html>

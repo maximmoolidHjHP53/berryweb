@@ -177,27 +177,29 @@
                 return;
             }
 
-            try {
-                const response = await fetch('/api/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-                const data = await response.json();
-
-                if (data.success) {
-                    localStorage.setItem('berry_user', username);
-                    localStorage.setItem('username', username);
-                    window.location.href = '/dashboard';
-                } else {
-                    errorMsg.textContent = data.message || 'Registration failed.';
-                    errorMsg.style.display = 'block';
-                }
-            } catch (err) {
-                errorMsg.textContent = 'Connection error. Please try again.';
-                errorMsg.style.display = 'block';
-            }
+                try {
+        const response = await fetch('/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
         });
+        
+        const data = await response.json();
+
+        if (data.success) {
+            localStorage.setItem('berry_user', username);
+            localStorage.setItem('username', username);
+            window.location.href = '/dashboard';
+        } else {
+            errorMsg.textContent = data.message || 'Registration failed.';
+            errorMsg.style.display = 'block';
+        }
+    } catch (err) {
+        errorMsg.textContent = 'Connection error. Please try again.';
+        errorMsg.style.display = 'block';
+    }
+});
+
     </script>
 </body>
 </html>

@@ -264,27 +264,37 @@ body {
             
             errorMsg.style.display = 'none';
 
-            try {
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-                const data = await response.json();
+            document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const errorMsg = document.getElementById('errorMsg');
+    
+    errorMsg.style.display = 'none';
 
-                if (data.success) {
-                    localStorage.setItem('berry_user', username);
-                    localStorage.setItem('username', username);
-                    window.location.href = '/dashboard';
-                } else {
-                    errorMsg.textContent = data.message || 'Invalid username or password.';
-                    errorMsg.style.display = 'block';
-                }
-            } catch (err) {
-                errorMsg.textContent = 'Connection error. Please try again.';
-                errorMsg.style.display = 'block';
-            }
+    try {
+        const response = await fetch('/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
         });
+        
+        const data = await response.json();
+
+        if (data.success) {
+            localStorage.setItem('berry_user', username);
+            localStorage.setItem('username', username);
+            window.location.href = '/dashboard';
+        } else {
+            errorMsg.textContent = data.message || 'Login failed.';
+            errorMsg.style.display = 'block';
+        }
+    } catch (err) {
+        errorMsg.textContent = 'Connection error. Please try again.';
+        errorMsg.style.display = 'block';
+    }
+});
+
     </script>
 </body>
 </html>

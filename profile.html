@@ -143,9 +143,12 @@
         </div>
     </div>
 
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js">
+</script>
+
 <script>
-    const socket = io({
+    // Automatically detects if you are local or live on Render
+    const socket = io(window.location.origin, {
         transports: ['polling', 'websocket'],
         reconnection: true,
         reconnectionAttempts: Infinity,
