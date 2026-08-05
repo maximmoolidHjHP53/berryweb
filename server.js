@@ -12,27 +12,21 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname)));
 
-// Persistent JSON Storage File
 const USERS_FILE = path.join(__dirname, 'users.json');
 
 function loadUsers() {
     try {
         if (fs.existsSync(USERS_FILE)) {
-            const data = fs.readFileSync(USERS_FILE, 'utf8');
-            return JSON.parse(data);
+            return JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
         }
-    } catch (e) {
-        console.error('Error loading users.json:', e);
-    }
+    } catch (e) { console.error(e); }
     return {};
 }
 
 function saveUsers() {
     try {
         fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-    } catch (e) {
-        console.error('Error saving users.json:', e);
-    }
+    } catch (e) { console.error(e); }
 }
 
 let users = loadUsers();
@@ -53,7 +47,7 @@ app.post('/api/login', (req, res) => {
     if (users[username] && users[username].password === password) {
         res.json({ success: true, username });
     } else {
-        res.json({ success: false, message: 'Invalid username or password!' });
+        res.json({ success: false, message: 'Invalid credentials!' });
     }
 });
 
@@ -66,6 +60,7 @@ app.post('/api/register', (req, res) => {
         password,
         friends: [],
         friendRequests: [],
+        sentRequests: [],
         bio: 'Hello! I am using Berryweb.',
         avatar: '',
         regDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
@@ -79,6 +74,10 @@ io.on('connection', (socket) => {
     socket.on('user_online', (username) => {
         if (username) {
             onlineUsers[socket.id] = username;
+            if (!users[username]) {
+                users[username] = { friends: [], friendRequests: [], sentRequests: [], unreadCounts: {} };
+            }
+            saveUsers();
             io.emit('update_online_status', Object.values(onlineUsers));
         }
     });
@@ -96,6 +95,7 @@ io.on('connection', (socket) => {
                 password,
                 friends: [],
                 friendRequests: [],
+                sentRequests: [],
                 bio: 'Hello! I am using Berryweb.',
                 avatar: '',
                 regDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
@@ -121,10 +121,11 @@ io.on('connection', (socket) => {
 
     socket.on('get_user_data', (username) => {
         if (users[username]) {
+            if (!users[username].sentRequests) users[username].sentRequests = [];
             socket.emit('user_data_response', users[username]);
         } else {
             socket.emit('user_data_response', {
-                bio: 'Hello!', avatar: '', regDate: 'August 5, 2026', friends: [], friendRequests: []
+                bio: 'Hello!', avatar: '', regDate: 'August 5, 2026', friends: [], friendRequests: [], sentRequests: []
             });
         }
     });
@@ -143,8 +144,11 @@ io.on('connection', (socket) => {
         const { sender, receiver } = data;
         if (users[receiver] && !users[receiver].friendRequests.includes(sender) && !users[receiver].friends.includes(sender)) {
             users[receiver].friendRequests.push(sender);
+            if (!users[sender].sentRequests) users[sender].sentRequests = [];
+            if (!users[sender].sentRequests.includes(receiver)) users[sender].sentRequests.push(receiver);
             saveUsers();
             io.emit('refresh_requests_' + receiver);
+            io.emit('refresh_friends_' + sender);
         }
     });
 
@@ -152,6 +156,9 @@ io.on('connection', (socket) => {
         const { username, requester, action } = data;
         if (users[username]) {
             users[username].friendRequests = users[username].friendRequests.filter(u => u !== requester);
+            if (users[requester] && users[requester].sentRequests) {
+                users[requester].sentRequests = users[requester].sentRequests.filter(u => u !== username);
+            }
             if (action === 'accept') {
                 if (!users[username].friends.includes(requester)) users[username].friends.push(requester);
                 if (users[requester] && !users[requester].friends.includes(username)) {
@@ -164,6 +171,10 @@ io.on('connection', (socket) => {
             io.emit('refresh_friends_' + username);
             io.emit('refresh_requests_' + username);
         }
+    });
+
+    socket.on('typing', (data) => {
+        io.emit('typing_status', data);
     });
 
     socket.on('get_messages', (data) => {
@@ -199,5 +210,5 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`Berryweb running on port ${PORT}`);
+    console.log(`Berryweb running live on port ${PORT}`);
 });

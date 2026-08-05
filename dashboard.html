@@ -27,7 +27,7 @@
         .avatar-container {
             width: 55px; height: 55px; border-radius: 50%; background: #22c55e;
             display: flex; align-items: center; justify-content: center; font-weight: bold;
-            font-size: 22px; overflow: hidden; color: #fff; position: relative;
+            font-size: 22px; overflow: hidden; color: #fff; position: relative; cursor: pointer;
         }
         .avatar-container img { width: 100%; height: 100%; object-fit: cover; }
 
@@ -50,10 +50,15 @@
         }
         .card-box h3 { font-size: 15px; margin-bottom: 15px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        /* Search Bar */
+        /* Search Bar with @ symbol */
+        .search-wrapper { position: relative; margin-bottom: 12px; }
+        .search-symbol {
+            position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
+            color: #22c55e; font-weight: bold; font-size: 16px; pointer-events: none;
+        }
         .search-input {
             width: 100%; background: #252a37; border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px; padding: 12px 15px; color: white; font-size: 14px; outline: none; margin-bottom: 12px;
+            border-radius: 12px; padding: 12px 15px 12px 36px; color: white; font-size: 14px; outline: none;
         }
         .search-input:focus { border-color: #22c55e; }
 
@@ -74,8 +79,10 @@
         .btn-primary {
             background: #22c55e; color: white; border: none; padding: 7px 14px;
             border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: bold; text-decoration: none;
+            display: inline-block;
         }
         .btn-primary:hover { background: #16a34a; }
+        .btn-disabled { background: #334155; color: #94a3b8; cursor: not-allowed; }
         .btn-danger { background: #ef4444; }
         .btn-danger:hover { background: #dc2626; }
         
@@ -86,7 +93,9 @@
             background-color: #ef4444; color: white; font-size: 10px; font-weight: bold;
             padding: 2px 6px; border-radius: 10px; position: absolute; top: -8px; right: -8px;
             box-shadow: 0 2px 5px rgba(239, 68, 68, 0.5);
+            animation: pulseBadge 1.5s infinite;
         }
+        @keyframes pulseBadge { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
 
         /* Logout Modal */
         .modal-backdrop {
@@ -110,7 +119,7 @@
     <div class="dashboard-container">
         <div class="user-header-card">
             <div class="user-info-left">
-                <div class="avatar-container" id="headerAvatarContainer">
+                <div class="avatar-container" id="headerAvatarContainer" onclick="window.location.href='/profile'">
                     <span id="headerInitial">U</span>
                 </div>
                 <div class="user-details">
@@ -126,7 +135,10 @@
 
         <div class="card-box">
             <h3>Find Users & Add Friends</h3>
-            <input type="text" id="searchInput" class="search-input" autocomplete="off" placeholder="Search users by username..." oninput="handleSearch(this.value)">
+            <div class="search-wrapper">
+                <span class="search-symbol">@</span>
+                <input type="text" id="searchInput" class="search-input" autocomplete="off" placeholder="searchusername..." oninput="handleSearch(this.value)">
+            </div>
             <div id="searchResultsContainer" style="display: none;">
                 <div class="search-results-list" id="searchResultsList"></div>
             </div>
@@ -162,6 +174,12 @@
         if (!currentUser) {
             window.location.href = '/login';
         } else {
+            // Lock session back navigation protection
+            history.pushState(null, null, location.href);
+            window.onpopstate = function () {
+                history.go(1);
+            };
+
             document.getElementById('displayUsername').textContent = currentUser;
             document.getElementById('headerInitial').textContent = currentUser.charAt(0).toUpperCase();
         }
@@ -169,7 +187,8 @@
         const socket = io();
         let allRegisteredUsers = [];
         let onlineUsersList = [];
-        let currentUserData = { friends: [], friendRequests: [], unreadCounts: {} };
+        let typingUsersMap = {};
+        let currentUserData = { friends: [], friendRequests: [], sentRequests: [], unreadCounts: {} };
 
         socket.emit('user_online', currentUser);
         socket.emit('get_user_data', currentUser);
@@ -186,6 +205,9 @@
             }
             renderFriends(userData.friends || []);
             renderRequests(userData.friendRequests || []);
+            if (document.getElementById('searchInput').value.trim() !== '') {
+                handleSearch(document.getElementById('searchInput').value);
+            }
         });
 
         socket.on('update_online_status', (onlineArr) => {
@@ -206,11 +228,19 @@
             socket.emit('get_user_data', currentUser);
         });
 
-        // Live Search Handler
+        // Live typing indicator listener
+        socket.on('typing_status', (data) => {
+            if (data.receiver === currentUser) {
+                typingUsersMap[data.sender] = data.isTyping;
+                renderFriends(currentUserData.friends || []);
+            }
+        });
+
+        // Live Search Handler with @ username format
         function handleSearch(query) {
             const container = document.getElementById('searchResultsContainer');
             const list = document.getElementById('searchResultsList');
-            const trimmed = query.trim().toLowerCase();
+            const trimmed = query.replace('@', '').trim().toLowerCase();
 
             if (trimmed === '') {
                 container.style.display = 'none';
@@ -229,6 +259,7 @@
             list.innerHTML = '';
             matches.forEach(username => {
                 const isFriend = (currentUserData.friends || []).includes(username);
+                const isPending = (currentUserData.sentRequests || []).includes(username);
                 const isSelf = username === currentUser;
 
                 const item = document.createElement('div');
@@ -239,14 +270,16 @@
                     actionHtml = `<span style="font-size: 12px; color: #64748b;">(You)</span>`;
                 } else if (isFriend) {
                     actionHtml = `<span class="badge-friend">Friends</span>`;
+                } else if (isPending) {
+                    actionHtml = `<button class="btn-primary btn-disabled" disabled>Pending / Requested</button>`;
                 } else {
                     actionHtml = `<button class="btn-primary" onclick="sendFriendRequest('${username}')">Add Friend</button>`;
                 }
 
                 item.innerHTML = `
                     <div class="item-info">
-                        <div class="avatar-container" style="width: 36px; height: 36px; font-size: 14px;">${username.charAt(0).toUpperCase()}</div>
-                        <h4 style="font-size: 14px; font-weight: 600;">${username}</h4>
+                        <div class="avatar-container" style="width: 36px; height: 36px; font-size: 14px; cursor: default;">${username.charAt(0).toUpperCase()}</div>
+                        <h4 style="font-size: 14px; font-weight: 600;">@${username}</h4>
                     </div>
                     <div>${actionHtml}</div>
                 `;
@@ -256,16 +289,16 @@
 
         function sendFriendRequest(targetUser) {
             socket.emit('send_friend_request', { sender: currentUser, receiver: targetUser });
-            alert(`Friend request sent to ${targetUser}!`);
-            document.getElementById('searchInput').value = '';
-            document.getElementById('searchResultsContainer').style.display = 'none';
+            if (!currentUserData.sentRequests) currentUserData.sentRequests = [];
+            currentUserData.sentRequests.push(targetUser);
+            handleSearch(document.getElementById('searchInput').value);
         }
 
         function respondRequest(requester, action) {
             socket.emit('respond_friend_request', { username: currentUser, requester, action });
         }
 
-        // Render Friendlist Box with Online Indicators & Unread Badges
+        // Render Friendlist with Online Dots, Unread Badges, and Typing Indicator
         function renderFriends(friends) {
             const container = document.getElementById('friendsListContainer');
             if (friends.length === 0) {
@@ -278,18 +311,21 @@
                 const isOnline = onlineUsersList.includes(friend);
                 const statusClass = isOnline ? 'status-online' : 'status-offline';
                 const unreadCount = (currentUserData.unreadCounts || {})[friend] || 0;
+                const isTyping = typingUsersMap[friend];
 
                 const item = document.createElement('div');
                 item.className = 'list-item';
                 item.innerHTML = `
                     <div class="item-info">
                         <div style="position: relative;">
-                            <div class="avatar-container" style="width: 40px; height: 40px; font-size: 16px;">${friend.charAt(0).toUpperCase()}</div>
+                            <div class="avatar-container" style="width: 40px; height: 40px; font-size: 16px; cursor: default;">${friend.charAt(0).toUpperCase()}</div>
                             <span class="status-indicator ${statusClass}" style="position: absolute; bottom: 0; right: 0;"></span>
                         </div>
                         <div>
-                            <h4 style="font-size: 14px; font-weight: 600;">${friend}</h4>
-                            <span style="font-size: 11px; color: #94a3b8;">${isOnline ? 'Online' : 'Offline'}</span>
+                            <h4 style="font-size: 14px; font-weight: 600;">@${friend}</h4>
+                            <span style="font-size: 11px; color: ${isTyping ? '#22c55e' : '#94a3b8'}; font-weight: ${isTyping ? 'bold' : 'normal'};">
+                                ${isTyping ? 'typing...' : (isOnline ? 'Online' : 'Offline')}
+                            </span>
                         </div>
                     </div>
                     <div class="chat-btn-wrapper">
@@ -301,7 +337,6 @@
             });
         }
 
-        // Render Incoming Friend Requests Box
         function renderRequests(requests) {
             const cardBox = document.getElementById('requestsCardBox');
             const container = document.getElementById('requestsListContainer');
@@ -319,8 +354,8 @@
                 item.className = 'list-item';
                 item.innerHTML = `
                     <div class="item-info">
-                        <div class="avatar-container" style="width: 38px; height: 38px; font-size: 15px;">${requester.charAt(0).toUpperCase()}</div>
-                        <h4 style="font-size: 14px; font-weight: 600;">${requester}</h4>
+                        <div class="avatar-container" style="width: 38px; height: 38px; font-size: 15px; cursor: default;">${requester.charAt(0).toUpperCase()}</div>
+                        <h4 style="font-size: 14px; font-weight: 600;">@${requester}</h4>
                     </div>
                     <div style="display: flex; gap: 8px;">
                         <button class="btn-primary" onclick="respondRequest('${requester}', 'accept')">Accept</button>
@@ -331,7 +366,7 @@
             });
         }
 
-        // Logout Confirmation Modal
+        // Logout Confirmation Modal -> Redirects to landing page (home.html)
         const logoutBtn = document.getElementById('logoutBtn');
         const logoutModal = document.getElementById('logoutModal');
 
@@ -339,7 +374,7 @@
         document.getElementById('cancelLogout').addEventListener('click', () => logoutModal.classList.remove('active'));
         document.getElementById('confirmLogout').addEventListener('click', () => {
             localStorage.clear();
-            window.location.href = '/login';
+            window.location.href = '/home';
         });
     </script>
 </body>
