@@ -124,6 +124,7 @@
             gap: 10px;
             background-color: var(--bg-color);
             -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
         }
 
         .message-bubble {
@@ -133,6 +134,12 @@
             font-size: 14px;
             line-height: 1.4;
             word-break: break-word;
+            animation: fadeIn 0.15s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .message-bubble.me {
@@ -249,6 +256,10 @@
             cursor: pointer;
             font-weight: bold;
             flex-shrink: 0;
+            transition: transform 0.1s ease;
+        }
+        .send-btn:active {
+            transform: scale(0.92);
         }
 
         .photo-modal {
@@ -364,16 +375,20 @@
                 const area = document.getElementById('messagesArea');
 
                 if (data.messages) {
-                    area.innerHTML = '';
-                    renderedMessageKeys.clear();
-                    data.messages.forEach(msg => {
-                        renderMessage(msg);
-                    });
+                    // Only redraw if message count changes to prevent blinking/re-rendering lag
+                    if (data.messages.length !== renderedMessageKeys.size) {
+                        area.innerHTML = '';
+                        renderedMessageKeys.clear();
+                        data.messages.forEach(msg => {
+                            renderMessage(msg, false); // false = don't force auto-scroll every single item on initial load
+                        });
+                        area.scrollTop = area.scrollHeight;
+                    }
                 }
             } catch (err) {}
         }
 
-        function renderMessage(msg) {
+        function renderMessage(msg, shouldScroll = true) {
             const msgKey = `${msg.sender}_${msg.time}_${msg.text || msg.image}`;
             if (renderedMessageKeys.has(msgKey)) return;
             renderedMessageKeys.add(msgKey);
@@ -401,7 +416,10 @@
                 </div>
             `;
             area.appendChild(bubble);
-            area.scrollTop = area.scrollHeight;
+            
+            if (shouldScroll) {
+                area.scrollTop = area.scrollHeight;
+            }
         }
 
         function handleTypingInput() {
@@ -441,8 +459,9 @@
                 time: timeStr
             };
 
+            // Instant Messenger style rendering
+            renderMessage(messagePayload, true);
             socket.emit('send_message', messagePayload);
-            renderMessage(messagePayload);
         }
 
         function handleImageUpload(e) {
@@ -460,15 +479,15 @@
                     time: timeStr
                 };
 
+                renderMessage(messagePayload, true);
                 socket.emit('send_message', messagePayload);
-                renderMessage(messagePayload);
             };
             reader.readAsDataURL(file);
         }
 
         socket.on('receive_message', (data) => {
             if (data.sender === friendUsername || data.receiver === friendUsername) {
-                renderMessage(data);
+                renderMessage(data, true);
             }
         });
 
@@ -496,6 +515,8 @@
         });
 
         loadMessages();
+        // Background sync check every 4 seconds without resetting scroll position
+        setInterval(loadMessages, 4000);
     </script>
 </body>
 </html>
