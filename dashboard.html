@@ -340,7 +340,7 @@
             flex-shrink: 0;
         }
 
-        /* Facebook-Style Bright Red Notification Counter Badge */
+        /* Bright Red Facebook-Style Notification Badge */
         .unread-badge {
             background-color: #ff3b30 !important;
             color: #ffffff !important;
@@ -412,18 +412,17 @@
     </div>
 
     <script>
-        // --- Permanent Security & Chrome Storage Lock ---
+        // --- Permanent Security & Chrome Session Lock ---
         let currentUsername = localStorage.getItem('berry_session_user') || localStorage.getItem('username') || sessionStorage.getItem('berry_user');
         
         if (!currentUsername) {
             window.location.replace('/login');
         } else {
-            // Lock session permanently into persistent storage so reloading or closing Chrome never drops login
             localStorage.setItem('berry_session_user', currentUsername);
             localStorage.setItem('username', currentUsername);
             sessionStorage.setItem('berry_user', currentUsername);
 
-            // Intercept phone hardware back button so it keeps user trapped securely on dashboard instead of logging out
+            // Intercept phone back button to keep user locked securely on dashboard
             history.pushState(null, null, window.location.href);
             window.addEventListener('popstate', function () {
                 history.pushState(null, null, window.location.href);
@@ -537,7 +536,6 @@
                                     lastMsgText = latest.text;
                                 }
 
-                                // Fallback client-side unread calculation if backend route is missing
                                 const totalFriendMsgs = messages.filter(m => m.sender === friend.username).length;
                                 const storageKey = `berry_read_count_${currentUsername}_${friend.username}`;
                                 let lastReadCount = parseInt(localStorage.getItem(storageKey) || "0");
@@ -559,7 +557,6 @@
                             existingItem.className = 'friend-item';
                             existingItem.id = `friend-row-${friend.username}`;
                             existingItem.onclick = async () => {
-                                // Clear unread counters instantly when chat is clicked
                                 try {
                                     localStorage.setItem(`berry_read_count_${currentUsername}_${friend.username}`, '999999');
                                     await fetch('/api/mark-read', {

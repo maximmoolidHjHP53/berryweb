@@ -141,8 +141,8 @@ app.post('/api/respond-request', async (req, res) => {
     }
 });
 
+// Add these routes to your server.js file alongside your other API routes
 
-// --- Unread Counts Route (JSON Database Version) ---
 app.get('/api/unread-counts', (req, res) => {
     try {
         const { user } = req.query;
@@ -165,7 +165,6 @@ app.get('/api/unread-counts', (req, res) => {
     }
 });
 
-// --- Mark Read Route (JSON Database Version) ---
 app.post('/api/mark-read', (req, res) => {
     try {
         const { user, friend } = req.body;
