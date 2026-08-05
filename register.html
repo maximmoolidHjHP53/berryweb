@@ -5,21 +5,131 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - BerryWeb</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 320px; }
-        input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; background: #007bff; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; margin-top: 10px; }
-        button:hover { background: #0056b3; }
-        #errorMsg { color: red; font-size: 13px; margin-top: 5px; display: none; }
-        .password-wrapper { position: relative; width: 100%; }
-        .password-wrapper input { padding-right: 40px; }
-        .eye-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 16px; user-select: none; }
+        /* Page Load Hover / Fade-in Animation */
+        @keyframes pageFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            animation: pageFadeIn 0.6s ease-out forwards;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+            width: 320px;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* Hover transition effect for the container card */
+        .container:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .logo {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 22px;
+        }
+
+        input {
+            width: 100%;
+            padding: 11px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .password-wrapper input {
+            padding-right: 40px;
+        }
+
+        .eye-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 16px;
+            user-select: none;
+        }
+
+        button {
+            width: 100%;
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 11px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .back-btn {
+            background: #6c757d;
+            margin-top: 8px;
+        }
+
+        .back-btn:hover {
+            background: #5a6268;
+        }
+
+        #errorMsg {
+            color: red;
+            font-size: 13px;
+            margin-top: 8px;
+            display: none;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
+        <div class="logo">🍇</div>
         <h2>Create Account</h2>
+        
         <form id="registerForm">
             <input type="text" id="username" placeholder="Username" required>
             
@@ -34,7 +144,10 @@
             </div>
 
             <div id="errorMsg"></div>
+            
             <button type="submit">Register Securely</button>
+            
+            <button type="button" class="back-btn" onclick="window.location.href='/login'">Back to Login</button>
         </form>
     </div>
 
@@ -58,7 +171,7 @@
             toggleConfirm.textContent = type === 'password' ? '👁️' : '👁️‍🗨️';
         });
 
-        // Registration Submission Handler
+        // Registration Submission Handler with Ultra-Secure Validation
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('username').value.trim();
@@ -94,7 +207,6 @@
                 if (data.success) {
                     localStorage.setItem('berry_user', username);
                     localStorage.setItem('username', username);
-                    // Successfully registered, go to policy page
                     window.location.href = '/policy';
                 } else {
                     errorMsg.textContent = data.message || 'Registration failed.';
