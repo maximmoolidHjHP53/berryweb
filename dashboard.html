@@ -115,13 +115,6 @@
             border-radius: 50%;
             border: 2px solid var(--card-bg);
             background-color: #00e676;
-            animation: pulse-green 2s infinite;
-        }
-
-        @keyframes pulse-green {
-            0% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.6); }
-            70% { box-shadow: 0 0 0 6px rgba(0, 230, 118, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); }
         }
 
         .user-details h3 {
@@ -193,11 +186,6 @@
             font-size: 14px;
             box-sizing: border-box;
             outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .search-input:focus {
-            border-color: var(--accent-green);
         }
 
         .search-results {
@@ -222,10 +210,6 @@
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--border-color);
-        }
-
-        .search-result-item:last-child {
-            border-bottom: none;
         }
 
         .result-username {
@@ -263,11 +247,6 @@
             padding: 12px 4px;
             border-bottom: 1px solid var(--border-color);
             cursor: pointer;
-            transition: background 0.15s;
-        }
-
-        .friend-item:last-child {
-            border-bottom: none;
         }
 
         .friend-item:active {
@@ -340,7 +319,7 @@
             flex-shrink: 0;
         }
 
-        /* Bright Red Facebook-Style Notification Badge */
+        /* Bright Red Notification Badge */
         .unread-badge {
             background-color: #ff3b30 !important;
             color: #ffffff !important;
@@ -398,7 +377,7 @@
         <div class="card">
             <div class="card-title">Find Users</div>
             <div class="search-wrapper">
-                <input type="text" id="searchInput" class="search-input" placeholder="Search username..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="secure_search_field_random_v2" readonly onfocus="this.removeAttribute('readonly');">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search username..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
                 <div id="searchResults" class="search-results"></div>
             </div>
         </div>
@@ -412,17 +391,16 @@
     </div>
 
     <script>
-        // --- Permanent Security & Chrome Session Lock ---
-        let currentUsername = localStorage.getItem('berry_session_user') || localStorage.getItem('username') || sessionStorage.getItem('berry_user');
+        // --- Permanent Security & Session Guard ---
+        let currentUsername = localStorage.getItem('berry_session_user') || localStorage.getItem('username');
         
         if (!currentUsername) {
             window.location.replace('/login');
         } else {
             localStorage.setItem('berry_session_user', currentUsername);
             localStorage.setItem('username', currentUsername);
-            sessionStorage.setItem('berry_user', currentUsername);
 
-            // Intercept phone back button to keep user locked securely on dashboard
+            // Intercept browser back button to lock session securely
             history.pushState(null, null, window.location.href);
             window.addEventListener('popstate', function () {
                 history.pushState(null, null, window.location.href);
@@ -443,7 +421,6 @@
 
         searchInput.addEventListener('input', async (e) => {
             const query = e.target.value.trim();
-
             if (query.length === 0) {
                 searchResults.style.display = 'none';
                 searchResults.innerHTML = '';
@@ -498,88 +475,109 @@
             } catch (err) {}
         }
 
-        let isFirstLoad = true
+        let isInitialLoaded = false;
 
-            async function loadFriends() {
-    const friendListEl = document.getElementById('friendList');
-    try {
-        const [friendsRes, unreadRes] = await Promise.all([
-            fetch(`/api/friends?user=${encodeURIComponent(currentUsername)}`),
-            fetch(`/api/unread-counts?user=${encodeURIComponent(currentUsername)}`).catch(() => ({ json: () => ({ counts: {} }) }))
-        ]);
-        
-        const data = await friendsRes.json();
-        const unreadData = await unreadRes.json();
-        const unreadCounts = unreadData.counts || {};
+        // --- Flicker-Free Silent Background Friend & Unread Poller ---
+        async function loadFriends() {
+            const friendListEl = document.getElementById('friendList');
+            try {
+                const [friendsRes, unreadRes] = await Promise.all([
+                    fetch(`/api/friends?user=${encodeURIComponent(currentUsername)}`),
+                    fetch(`/api/unread-counts?user=${encodeURIComponent(currentUsername)}`).catch(() => ({ json: () => ({ counts: {} }) }))
+                ]);
+                
+                const data = await friendsRes.json();
+                const unreadData = await unreadRes.json();
+                const unreadCounts = unreadData.counts || {};
 
-        if (data.friends && data.friends.length > 0) {
-            friendListEl.innerHTML = '';
+                if (data.friends && data.friends.length > 0) {
+                    const loadingEl = document.getElementById('loadingText');
+                    if (loadingEl) loadingEl.remove();
 
-            for (let i = 0; i < data.friends.length; i++) {
-                const friend = data.friends[i];
-                let lastMsgText = "Tap to start chatting";
-                let unreadCount = unreadCounts[friend.username] || 0;
+                    for (let i = 0; i < data.friends.length; i++) {
+                        const friend = data.friends[i];
+                        let lastMsgText = "Tap to start chatting";
+                        let unreadCount = unreadCounts[friend.username] || 0;
 
-                try {
-                    const msgRes = await fetch(`/api/messages?user=${encodeURIComponent(currentUsername)}&friend=${encodeURIComponent(friend.username)}`);
-                    const msgData = await msgRes.json();
-                    if (msgData.messages && msgData.messages.length > 0) {
-                        const messages = msgData.messages;
-                        const latest = messages[messages.length - 1];
-                        
-                        if (latest.image && !latest.text) {
-                            lastMsgText = "📷 Sent a photo";
+                        try {
+                            const msgRes = await fetch(`/api/messages?user=${encodeURIComponent(currentUsername)}&friend=${encodeURIComponent(friend.username)}`);
+                            const msgData = await msgRes.json();
+                            if (msgData.messages && msgData.messages.length > 0) {
+                                const messages = msgData.messages;
+                                const latest = messages[messages.length - 1];
+                                
+                                if (latest.image && !latest.text) {
+                                    lastMsgText = "📷 Sent a photo";
+                                } else {
+                                    lastMsgText = latest.text;
+                                }
+                            }
+                        } catch (e) {}
+
+                        const unreadClass = unreadCount > 0 ? 'unread' : '';
+                        const badgeHtml = unreadCount > 0 
+                            ? `<div class="unread-badge">${unreadCount}</div>` 
+                            : `<div class="message-action">Chat</div>`;
+
+                        let existingItem = document.getElementById(`friend-row-${friend.username}`);
+
+                        // Silently update existing DOM elements without destroying them (No Flickering!)
+                        if (existingItem) {
+                            const nameEl = existingItem.querySelector('.friend-name');
+                            const msgEl = existingItem.querySelector('.friend-last-msg');
+                            const metaEl = existingItem.querySelector('.friend-meta-right');
+
+                            if (nameEl) nameEl.className = `friend-name ${unreadClass}`;
+                            if (msgEl) {
+                                msgEl.className = `friend-last-msg ${unreadClass}`;
+                                if (msgEl.textContent !== escapeHtml(lastMsgText)) {
+                                    msgEl.textContent = escapeHtml(lastMsgText);
+                                }
+                            }
+                            if (metaEl && metaEl.innerHTML !== badgeHtml) {
+                                metaEl.innerHTML = badgeHtml;
+                            }
                         } else {
-                            lastMsgText = latest.text;
+                            // Build the item once if it doesn't exist
+                            existingItem = document.createElement('li');
+                            existingItem.className = 'friend-item';
+                            existingItem.id = `friend-row-${friend.username}`;
+                            existingItem.onclick = async () => {
+                                try {
+                                    await fetch('/api/mark-read', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ user: currentUsername, friend: friend.username })
+                                    });
+                                } catch(err){}
+                                window.location.href = `/chat?friend=${encodeURIComponent(friend.username)}`;
+                            };
+
+                            existingItem.innerHTML = `
+                                <div class="friend-info">
+                                    <div class="friend-avatar-wrapper">
+                                        <div class="friend-avatar">${friend.username.charAt(0).toUpperCase()}</div>
+                                        <div class="status-dot"></div>
+                                    </div>
+                                    <div class="friend-details">
+                                        <div class="friend-name ${unreadClass}">@${friend.username}</div>
+                                        <span class="friend-last-msg ${unreadClass}">${escapeHtml(lastMsgText)}</span>
+                                    </div>
+                                </div>
+                                <div class="friend-meta-right">
+                                    ${badgeHtml}
+                                </div>
+                            `;
+                            friendListEl.appendChild(existingItem);
                         }
-                    }
-                } catch (e) {}
 
-                const existingItem = document.createElement('li');
-                existingItem.className = 'friend-item';
-                existingItem.onclick = async () => {
-                    try {
-                        await fetch('/api/mark-read', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ user: currentUsername, friend: friend.username })
-                        });
-                    } catch(err){}
-                    window.location.href = `/chat?friend=${encodeURIComponent(friend.username)}`;
-                };
-
-                const unreadClass = unreadCount > 0 ? 'unread' : '';
-                // Renders a bright red bubble if unreadCount > 0, otherwise shows "Chat"
-                const badgeHtml = unreadCount > 0 
-                    ? `<div class="unread-badge">${unreadCount}</div>` 
-                    : `<div class="message-action">Chat</div>`;
-
-                existingItem.innerHTML = `
-                    <div class="friend-info">
-                        <div class="friend-avatar-wrapper">
-                            <div class="friend-avatar">${friend.username.charAt(0).toUpperCase()}</div>
-                            <div class="status-dot"></div>
-                        </div>
-                        <div class="friend-details">
-                            <div class="friend-name ${unreadClass}">@${friend.username}</div>
-                            <span class="friend-last-msg ${unreadClass}">${escapeHtml(lastMsgText)}</span>
-                        </div>
-                    </div>
-                    <div class="friend-meta-right">
-                        ${badgeHtml}
-                    </div>
-                `;
-                friendListEl.appendChild(existingItem);
-            }
-        } else {
-            friendListEl.innerHTML = `<li class="no-friends">No active chats. Search above to add friends!</li>`;
+                      }
+                    isInitialLoaded = true;
+                } else if (!isInitialLoaded) {
+                    friendListEl.innerHTML = `<li class="no-friends">No active chats. Search above to add friends!</li>`;
+                }
+            } catch (err) {}
         }
-    } catch (err) {
-        friendListEl.innerHTML = `<li class="no-friends">Failed to load chats.</li>`;
-    }
-}
-
-        
 
         function escapeHtml(text) {
             if (!text) return '';
@@ -601,6 +599,7 @@
             } catch (err) {}
         }
 
+        // Run immediately and poll silently every 3 seconds
         loadFriends();
         checkInboxCount();
         setInterval(() => {
