@@ -142,44 +142,49 @@ app.post('/api/respond-request', async (req, res) => {
 });
 
 
-// --- Add this route to your server.js file ---
+// --- Unread Counts Route (JSON Database Version) ---
 app.get('/api/unread-counts', (req, res) => {
-    const { user } = req.query;
-    if (!user) return res.json({ counts: {} });
+    try {
+        const { user } = req.query;
+        if (!user) return res.json({ counts: {} });
 
-    // Read your database file (adjust variable or function names based on your existing setup)
-    const db = readDatabase();
-    const counts = {};
+        const db = readDatabase();
+        const counts = {};
 
-    if (db.messages) {
-        db.messages.forEach(msg => {
-            // Count messages where the current user is the receiver and they are unread
-            if (msg.receiver === user && !msg.read) {
-                counts[msg.sender] = (counts[msg.sender] || 0) + 1;
-            }
-        });
+        if (db.messages && Array.isArray(db.messages)) {
+            db.messages.forEach(msg => {
+                if (msg.receiver === user && !msg.read) {
+                    counts[msg.sender] = (counts[msg.sender] || 0) + 1;
+                }
+            });
+        }
+
+        res.json({ counts });
+    } catch (err) {
+        res.json({ counts: {} });
     }
-
-    res.json({ counts });
 });
 
-// --- Add this route to your server.js file ---
+// --- Mark Read Route (JSON Database Version) ---
 app.post('/api/mark-read', (req, res) => {
-    const { user, friend } = req.body;
-    const db = readDatabase();
-    
-    if (db.messages) {
-        db.messages.forEach(msg => {
-            if (msg.receiver === user && msg.sender === friend) {
-                msg.read = true;
-            }
-        });
-        writeDatabase(db);
+    try {
+        const { user, friend } = req.body;
+        const db = readDatabase();
+        
+        if (db.messages && Array.isArray(db.messages)) {
+            db.messages.forEach(msg => {
+                if (msg.receiver === user && msg.sender === friend) {
+                    msg.read = true;
+                }
+            });
+            writeDatabase(db);
+        }
+        
+        res.json({ success: true });
+    } catch (err) {
+        res.json({ success: false });
     }
-    
-    res.json({ success: true });
 });
-
 
 
 app.get('/api/inbox-count', async (req, res) => {
