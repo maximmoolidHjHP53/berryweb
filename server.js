@@ -2,7 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
-const fs = require('fs'); // Added file system module to save data persistently locally
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
@@ -13,10 +13,8 @@ const io = new Server(server, {
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '.')));
 
-// Path to a persistent storage file (or connect to MongoDB Atlas)
 const DB_FILE = path.join(__dirname, 'users.json');
 
-// Helper to read users
 function getUsers() {
     if (!fs.existsSync(DB_FILE)) return [];
     try {
@@ -27,20 +25,17 @@ function getUsers() {
     }
 }
 
-// Core Routes
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'home.html'));
-});
+function saveUsers(users) {
+    fs.writeFileSync(DB_FILE, JSON.stringify(users, null, 2));
+}
 
 // Routes
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
 app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
 app.get('/policy', (req, res) => res.sendFile(path.join(__dirname, 'policy.html')));
 
-// Registration Endpoint with Permanent Storage
 app.post('/register', (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) {
@@ -48,13 +43,10 @@ app.post('/register', (req, res) => {
     }
 
     const users = getUsers();
-
-    // Check if username already exists
     if (users.some(user => user.username === username)) {
         return res.status(400).json({ success: false, message: "Username is already taken!" });
     }
 
-    // High security password validation
     const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!strongPasswordRegex.test(password)) {
         return res.status(400).json({ 
@@ -63,7 +55,6 @@ app.post('/register', (req, res) => {
         });
     }
 
-    // Save new user permanently
     users.push({ username, password });
     saveUsers(users);
 
@@ -86,3 +77,4 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
+
