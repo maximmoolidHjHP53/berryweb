@@ -127,6 +127,22 @@ io.on('connection', (socket) => {
         }
     });
 
+            socket.on('get_all_users', async () => {
+        try {
+            const usersCollection = db.collection('users');
+            const usersCursor = usersCollection.find({});
+            const usersList = await usersCursor.toArray();
+            
+            // Extract usernames robustly checking different property names
+            const usernames = usersList.map(u => u.username || u.user || u.name).filter(Boolean);
+            socket.emit('all_users_list', usernames);
+        } catch (e) {
+            socket.emit('all_users_list', []);
+        }
+    });
+
+
+  
     socket.on('send_message', (data) => {
         io.emit('receive_message', data);
     });

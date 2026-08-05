@@ -573,10 +573,10 @@
         const searchInput = document.getElementById('userSearchInput');
         const contactsContainer = document.getElementById('contactsContainer');
 
-        function renderContacts(query) {
+                function renderContacts(query) {
             const trimmedQuery = query.trim().toLowerCase();
 
-            // When search input is empty, show global registered users directory
+            // When search input is empty, show all registered users directory
             if (trimmedQuery === "") {
                 if (allRegisteredUsers.length === 0) {
                     contactsContainer.innerHTML = `
@@ -602,6 +602,43 @@
                         `;
                     });
                     contactsContainer.innerHTML = html;
+                }
+                return;
+            }
+
+            // FIXED: Case-insensitive and flexible matching using .includes() so any account can be found easily
+            const matchedUsers = allRegisteredUsers.filter(name => 
+                name.toLowerCase().includes(trimmedQuery)
+            );
+
+            if (matchedUsers.length === 0) {
+                contactsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-user-slash"></i>
+                        <span>No user found matching "@${query}"</span>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `<div class="section-label">Search Results</div>`;
+            matchedUsers.forEach(username => {
+                html += `
+                    <div class="contact-card" onclick="openChatWith('${username}')">
+                        <div class="contact-avatar-wrapper">
+                            <div class="contact-avatar">${username.charAt(0).toUpperCase()}</div>
+                            <div class="status-dot"></div>
+                        </div>
+                        <div class="contact-info">
+                            <h4>@${username}</h4>
+                            <p>Active now</p>
+                        </div>
+                    </div>
+                `;
+            });
+            contactsContainer.innerHTML = html;
+        }
+
                 }
                 return;
             }
