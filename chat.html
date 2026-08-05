@@ -124,7 +124,6 @@
             gap: 10px;
             background-color: var(--bg-color);
             -webkit-overflow-scrolling: touch;
-            scroll-behavior: smooth;
         }
 
         .message-bubble {
@@ -134,12 +133,6 @@
             font-size: 14px;
             line-height: 1.4;
             word-break: break-word;
-            animation: fadeIn 0.15s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(4px); }
-            to { opacity: 1; transform: translateY(0); }
         }
 
         .message-bubble.me {
@@ -256,10 +249,6 @@
             cursor: pointer;
             font-weight: bold;
             flex-shrink: 0;
-            transition: transform 0.1s ease;
-        }
-        .send-btn:active {
-            transform: scale(0.92);
         }
 
         .photo-modal {
@@ -348,7 +337,7 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Apply theme immediately from localStorage
+        // Apply theme instantly from localStorage
         const savedTheme = localStorage.getItem('berry_theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
 
@@ -368,22 +357,19 @@
 
         const renderedMessageKeys = new Set();
 
-        async function loadMessages() {
+        async function loadInitialMessages() {
             try {
                 const res = await fetch(`/api/messages?user=${encodeURIComponent(currentUsername)}&friend=${encodeURIComponent(friendUsername)}`);
                 const data = await res.json();
                 const area = document.getElementById('messagesArea');
 
                 if (data.messages) {
-                    // Only redraw if message count changes to prevent blinking/re-rendering lag
-                    if (data.messages.length !== renderedMessageKeys.size) {
-                        area.innerHTML = '';
-                        renderedMessageKeys.clear();
-                        data.messages.forEach(msg => {
-                            renderMessage(msg, false); // false = don't force auto-scroll every single item on initial load
-                        });
-                        area.scrollTop = area.scrollHeight;
-                    }
+                    area.innerHTML = '';
+                    renderedMessageKeys.clear();
+                    data.messages.forEach(msg => {
+                        renderMessage(msg, false);
+                    });
+                    area.scrollTop = area.scrollHeight;
                 }
             } catch (err) {}
         }
@@ -459,7 +445,7 @@
                 time: timeStr
             };
 
-            // Instant Messenger style rendering
+            // Instant local render + socket emit (No lag, no reloading!)
             renderMessage(messagePayload, true);
             socket.emit('send_message', messagePayload);
         }
@@ -485,6 +471,7 @@
             reader.readAsDataURL(file);
         }
 
+        // Real-time listener: Appends incoming messages instantly without resetting the whole page
         socket.on('receive_message', (data) => {
             if (data.sender === friendUsername || data.receiver === friendUsername) {
                 renderMessage(data, true);
@@ -514,9 +501,8 @@
             if (e.key === 'Enter') sendMessage();
         });
 
-        loadMessages();
-        // Background sync check every 4 seconds without resetting scroll position
-        setInterval(loadMessages, 4000);
+        // Load messages once upon entering chat
+        loadInitialMessages();
     </script>
 </body>
 </html>
