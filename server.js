@@ -15,36 +15,24 @@ app.use(express.static(path.join(__dirname)));
 let users = {}; 
 let messages = []; 
 
-// Explicit Page Routes (Fixes "Cannot GET" errors)
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'home.html'));
-});
+// Page Routes (Landing page is home.html)
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
+app.get('/home', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
+app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
+app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
+app.get('/chat', (req, res) => res.sendFile(path.join(__dirname, 'chat.html')));
+app.get('/profile', (req, res) => res.sendFile(path.join(__dirname, 'profile.html')));
 
-app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'login.html'));
-});
-
-app.get('/register', (req, res) => {
-    res.sendFile(path.join(__dirname, 'register.html'));
-});
-
-app.get('/dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dashboard.html'));
-});
-
-app.get('/chat', (req, res) => {
-    res.sendFile(path.join(__dirname, 'chat.html'));
-});
-
-app.get('/profile', (req, res) => {
-    res.sendFile(path.join(__dirname, 'profile.html'));
-});
-
-// Socket.io Events
+// Socket.io Handlers
 io.on('connection', (socket) => {
     
     socket.on('register_user', (data) => {
         const { username, password } = data;
+        if (!username || !password) {
+            socket.emit('register_error', 'All fields are required!');
+            return;
+        }
         if (users[username]) {
             socket.emit('register_error', 'Username already taken!');
         } else {
@@ -129,5 +117,5 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running successfully on port ${PORT}`);
 });
