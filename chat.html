@@ -355,6 +355,9 @@
         const socket = io();
         socket.emit('join', currentUsername);
 
+        // Keep track of rendered messages using unique keys to prevent double rendering
+        const renderedMessageKeys = new Set();
+
         async function loadMessages() {
             try {
                 const res = await fetch(`/api/messages?user=${encodeURIComponent(currentUsername)}&friend=${encodeURIComponent(friendUsername)}`);
@@ -363,15 +366,21 @@
 
                 if (data.messages) {
                     area.innerHTML = '';
+                    renderedMessageKeys.clear();
+
                     data.messages.forEach(msg => {
                         renderMessage(msg);
                     });
-                    area.scrollTop = area.scrollHeight;
                 }
             } catch (err) {}
         }
 
         function renderMessage(msg) {
+            // Create a unique fingerprint for this message to prevent duplicates
+            const msgKey = `${msg.sender}_${msg.time}_${msg.text || msg.image}`;
+            if (renderedMessageKeys.has(msgKey)) return;
+            renderedMessageKeys.add(msgKey);
+
             const area = document.getElementById('messagesArea');
             const isMe = msg.sender === currentUsername;
             const bubble = document.createElement('div');
@@ -435,7 +444,6 @@
                 time: timeStr
             };
 
-            // Only emit via socket, server handles persistence and broadcasting safely without local duplicates
             socket.emit('send_message', messagePayload);
             renderMessage(messagePayload);
         }
@@ -476,7 +484,7 @@
 
         function closePhotoModal(e) {
             if (e.target.id === 'photoModal') {
-                document.getElementById('photoModal').classList.remove('active');
+                document.getElementById('photoModal'].classList.remove('active');
             }
         }
 
