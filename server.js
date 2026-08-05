@@ -6,12 +6,12 @@ const path = require('path');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-    cors: { origin: "*" },
-    transports: ['websocket', 'polling'],
-    pingTimeout: 120000,
-    pingInterval: 25000,
-    upgradeTimeout: 30000,
-    maxHttpBufferSize: 1e8
+    cors: { origin: "*" }
+});
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Berryweb running live on port ${PORT}`);
 });
 
 app.use(express.json());
