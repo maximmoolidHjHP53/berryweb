@@ -13,6 +13,11 @@ const io = new Server(server, {
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '.')));
 
+// Root Landing Page Route (Fixes the "Cannot GET /" error)
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'login.html'));
+});
+
 // Routes for HTML Pages
 app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname, 'register.html'));
